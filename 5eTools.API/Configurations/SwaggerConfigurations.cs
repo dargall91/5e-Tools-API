@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 
 namespace _5eTools.API.Configurations;
 
@@ -29,7 +30,7 @@ public static class SwaggerConfigurations
 
                     foreach (var group in provider.ApiVersionDescriptions.Select(x => x.GroupName))
                     {
-                        var path = $"swagger/{group}/swagger.json";
+                        var path = $"{group}/swagger.json";
                         var name = group.ToUpperInvariant();
 
                         options.SwaggerEndpoint(path, name);
