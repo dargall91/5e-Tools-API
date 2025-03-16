@@ -1,5 +1,6 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Versioning;
+using Asp.Versioning;
+using Microsoft.Extensions.Options;
 
 namespace _5eTools.API.Configurations;
 
@@ -24,6 +25,11 @@ public static class ControllerConfiguration
                     options.AssumeDefaultVersionWhenUnspecified = true;
                     options.ReportApiVersions = true;
                     options.ApiVersionReader = new UrlSegmentApiVersionReader();
+                })
+                .AddApiExplorer(options =>
+                {
+                    options.GroupNameFormat = "'v'VVV";
+                    options.SubstituteApiVersionInUrl = true;
                 });
 
         return services;
