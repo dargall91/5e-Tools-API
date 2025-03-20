@@ -13,7 +13,7 @@ public static class ApiBehaviorConfigurations
             {
                 var errors = actionContext.ModelState.Values.SelectMany(x => x.Errors.Select(y => y.ErrorMessage));
 
-                return ResponseWrapper<bool>.BadRequest(errors);
+                return new BadRequestObjectResult(new ResponseWrapper<object>(errors));
             };
         });
     }
