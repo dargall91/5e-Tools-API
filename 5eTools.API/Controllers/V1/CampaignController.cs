@@ -66,7 +66,7 @@ public class CampaignController : ControllerBase
         return Ok();
     }
 
-    // <remarks>
+    /// <remarks>
     /// Soft deletes the selected campaign
     /// </remarks>
     [HttpDelete("{id}")]

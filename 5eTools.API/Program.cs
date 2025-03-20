@@ -13,6 +13,7 @@ var app = builder.Build();
 app
     .ConfigureControllers()
     .ConfigureSwagger()
-    .ConfigureExceptions();
+    .ConfigureExceptions()
+    .MigrateDatabase();
 
 await app.RunAsync();

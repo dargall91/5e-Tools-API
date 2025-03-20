@@ -12,11 +12,13 @@ public class Campaign
     [StringLength(100)]
     public required string Name { get; set; }
 
-    public required bool IsActive { get; set; }
-
     public required bool UsesInflatedHitPoints { get; set; }
 
     public required bool UsesStress { get; set; }
 
-    public required bool IsDeleted { get; set; }
+    public bool IsActive { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public bool IsFinished { get; set; }
 }
