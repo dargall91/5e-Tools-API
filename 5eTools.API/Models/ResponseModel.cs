@@ -46,6 +46,12 @@ public class ResponseWrapper<T>
         Messages = messages.CreateErrorMessages();
     }
 
+    public ResponseWrapper(T? data, string message, string messageType)
+    {
+        Data = data;
+        Messages = message.CreateMessages(messageType);
+    }
+
     public ResponseWrapper(T? data, IEnumerable<string> messages, string messageType)
     {
         Data = data;
