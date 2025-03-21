@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../5eTools.Data/5eTools.Data.csproj" />
+    <ProjectReference Include="../5eTools.Services/5eTools.Services.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,7 @@
+using _5eTools.API.Models;
 using _5eTools.Data.Entities;
+using _5eTools.Services;
+using _5eTools.Services.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace _5eTools.API.Controllers.V1;
@@ -6,9 +9,9 @@ namespace _5eTools.API.Controllers.V1;
 /// <remarks>
 /// Endpoints to view, create, and modify campaigns
 /// </remarks>
-[Route("api/[controller]")]
+[Route("api/v{version:apiversion}/[controller]")]
 [ApiController]
-public class CampaignController : ControllerBase
+public class CampaignController(ICampaignService campaignService) : ControllerBase
 {
     /// <remarks>
     /// Gets a list of all campaigns
@@ -17,7 +20,11 @@ public class CampaignController : ControllerBase
     [HttpGet("all")]
     public IActionResult CampaignList()
     {
-        return Ok();
+        var campaigns = campaignService.FindAll();
+
+        var response = new ResponseWrapper<IEnumerable<Campaign>>(campaigns);
+
+        return Ok(response);
     }
 
     /// <remarks>
@@ -25,36 +32,59 @@ public class CampaignController : ControllerBase
     /// </remarks>
     /// <returns>The campaign details</returns>
     [HttpGet("{id}")]
-    public IActionResult CampaignList(int id)
+    public IActionResult GetById(int id)
     {
-        return Ok();
+        if (campaignService.CampaignExists(id))
+        {
+            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+        }
+
+        var response = new ResponseWrapper<Campaign>(campaignService.FindById(id));
+
+        return Ok(response);
     }
 
     /// <remarks>
     /// Creates a new Campaign
     /// </remarks>
     [HttpPut]
-    public IActionResult AddCampaign(Campaign campaign)
+    public IActionResult AddCampaign(AddEditCampaign campaign)
     {
-        return Ok();
+        var newCampaign = campaignService.AddCampaign(campaign);
+
+        var response = new ResponseWrapper<Campaign>(newCampaign);
+
+        return CreatedAtAction(nameof(GetById), new { id = newCampaign.Id }, response);
     }
 
     /// <remarks>
-    /// Edit an existing Campaign
+    /// Edits an existing Campaign
     /// </remarks>
-    [HttpPost]
-    public IActionResult EditCampaign(Campaign campaign)
+    [HttpPost("{id}")]
+    public IActionResult EditCampaign(int id, AddEditCampaign campaign)
     {
-        return Ok();
+        if (campaignService.CampaignExists(id))
+        {
+            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+        }
+
+        campaignService.UpdateCampaign(id, campaign);
+
+        return Ok(new ResponseWrapper<object>());
     }
 
     /// <remarks>
-    /// Gets the currently active campaign
+    /// Gets the currently active campaign, or null if there are no active campaigns
     /// </remarks>
     [HttpGet("active")]
-    public IActionResult GetActive(int id)
+    [ProducesResponseType(typeof(ResponseWrapper<Campaign>), StatusCodes.Status200OK)]
+    public IActionResult GetActive()
     {
-        return Ok();
+        var campaign = campaignService.FindActiveCampaign();
+
+        var response = new ResponseWrapper<Campaign>(campaign);
+
+        return Ok(response);
     }
 
     /// <remarks>
@@ -63,6 +93,18 @@ public class CampaignController : ControllerBase
     [HttpPost("{id}/activate")]
     public IActionResult SetActive(int id)
     {
+        if (campaignService.CampaignExists(id))
+        {
+            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+        }
+
+        if (campaignService.FindActiveCampaign()?.Id == id)
+        {
+            return Ok(new ResponseWrapper<object>("Campaign is already active", "Info"));
+        }
+
+        campaignService.ActivateCampaign(id);
+
         return Ok();
     }
 
@@ -72,6 +114,18 @@ public class CampaignController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        return Ok();
+        if (campaignService.CampaignExists(id))
+        {
+            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+        }
+
+        if (campaignService.FindActiveCampaign()?.Id == id)
+        {
+            return BadRequest(new ResponseWrapper<object>("The active campaign cannot be deleted"));
+        }
+
+        campaignService.DeleteCampaign(id);
+
+        return NoContent();
     }
 }
