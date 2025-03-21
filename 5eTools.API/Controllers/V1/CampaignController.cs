@@ -34,9 +34,9 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
-        if (campaignService.CampaignExists(id))
+        if (!campaignService.CampaignExists(id))
         {
-            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+            return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
         var response = new ResponseWrapper<Campaign>(campaignService.FindById(id));
@@ -63,9 +63,9 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     [HttpPost("{id}")]
     public IActionResult EditCampaign(int id, AddEditCampaign campaign)
     {
-        if (campaignService.CampaignExists(id))
+        if (!campaignService.CampaignExists(id))
         {
-            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+            return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
         campaignService.UpdateCampaign(id, campaign);
@@ -90,12 +90,12 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     /// <remarks>
     /// Sets the selected campaign as Active and deactivates the currently active Campaign
     /// </remarks>
-    [HttpPost("{id}/activate")]
+    [HttpPost("activate/{id}")]
     public IActionResult SetActive(int id)
     {
-        if (campaignService.CampaignExists(id))
+        if (!campaignService.CampaignExists(id))
         {
-            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+            return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
         if (campaignService.FindActiveCampaign()?.Id == id)
@@ -114,9 +114,9 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        if (campaignService.CampaignExists(id))
+        if (!campaignService.CampaignExists(id))
         {
-            return NotFound(new ResponseWrapper<object>($"No campaign if ID {id} found"));
+            return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
         if (campaignService.FindActiveCampaign()?.Id == id)
