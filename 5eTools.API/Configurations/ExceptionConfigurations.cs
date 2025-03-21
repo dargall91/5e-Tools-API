@@ -48,17 +48,15 @@ public static class ExceptionConfigurations
 
         context.Response.Body = responseBody;
         context.Response.ContentType = "application/json";
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         responseBody.CopyToAsync(stream);
 
-        var responseWrapper = ResponseWrapper<bool>.InternalServerError(exception.CompleteMessage());
+        var response = new ResponseWrapper<object>(exception.CompleteMessage());
 
-        var bodyContent = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(responseWrapper));
+        var bodyContent = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(response));
 
         stream.Write(bodyContent, 0, bodyContent.Length);
     }
 
-    private static string CompleteMessage(this Exception ex)
-    {
-        return $"{ex.Message}\r\n{ex.InnerException?.CompleteMessage()}";
-    }
+    private static string CompleteMessage(this Exception ex) => $"{ex.Message}\r\n{ex.InnerException?.CompleteMessage()}";
 }

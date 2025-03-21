@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Asp.Versioning;
-using Microsoft.Extensions.Options;
 
 namespace _5eTools.API.Configurations;
 
