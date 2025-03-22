@@ -21,4 +21,6 @@ public class Campaign
     public bool IsDeleted { get; set; }
 
     public bool IsFinished { get; set; }
+
+    public virtual ICollection<Monster> Monsters { get; set; } = new List<Monster>();
 }
