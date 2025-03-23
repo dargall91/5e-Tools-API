@@ -51,12 +51,10 @@ public static class ExceptionConfigurations
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         responseBody.CopyToAsync(stream);
 
-        var response = new ResponseWrapper<object>(exception.CompleteMessage());
+        var response = new ResponseWrapper<object>(exception.Message);
 
         var bodyContent = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(response));
 
-        stream.Write(bodyContent, 0, bodyContent.Length);
+        stream.WriteAsync(bodyContent, 0, bodyContent.Length);
     }
-
-    private static string CompleteMessage(this Exception ex) => $"{ex.Message}\r\n{ex.InnerException?.CompleteMessage()}";
 }
