@@ -53,10 +53,14 @@ public class Monster
     [ForeignKey($"{nameof(Entities.ChallengeRating)}{nameof(Entities.ChallengeRating.Id)}")]
     public required virtual ChallengeRating ChallengeRating { get; set; }
 
+    [ForeignKey($"{nameof(Monster)}{nameof(Id)}")]
     public virtual ICollection<MonsterAbility> Abilities { get; set; } = new List<MonsterAbility>();
-    public virtual ICollection<MonsterAction> Actions { get; set; } = new List<MonsterAction>();
-    public virtual ICollection<LegendaryAction> LegendaryActions { get; set; } = new List<LegendaryAction>();
 
+    [ForeignKey($"{nameof(Monster)}{nameof(Id)}")]
+    public virtual ICollection<MonsterAction> Actions { get; set; } = new List<MonsterAction>();
+
+    [ForeignKey($"{nameof(Monster)}{nameof(Id)}")]
+    public virtual ICollection<LegendaryAction> LegendaryActions { get; set; } = new List<LegendaryAction>();
 
     [ForeignKey($"{nameof(Entities.Campaign)}{nameof(Entities.Campaign.Id)}")]
     public required virtual Campaign Campaign { get; set; }

@@ -2,6 +2,7 @@ using _5eTools.Data;
 using _5eTools.Data.Entities;
 using _5eTools.Services.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace _5eTools.Services;
 
@@ -13,20 +14,14 @@ public interface IMonsterService
     bool LegendaryActionExistsOnMonster(int monsterId, int legendaryActionId);
     bool MonsterExistsForCampaign(int campaignId, string name);
     Monster FindById(int id);
-    void UpdateMonster(Monster monster);
+    Monster UpdateMonster(int id, MonsterDto monsterDto);
     Monster AddMonster(string name, Campaign campaign);
-    Monster CopyMonster(int id, string name, Campaign? targetCampaign);
+    Monster CopyMonster(int id, string name, Campaign campaign);
     void SetArchived(int id, bool isArchived);
     List<MonsterListItem> GetMonsterListItems(bool archived);
-    int AddAbility(int id);
-    int AddAction(int id);
-    int AddLegendaryAction(int id);
-    void DeleteAbility(int id);
-    void DeleteAction(int id);
-    void DeleteLegendaryAction(int id);
 }
 
-public class MonsterService(ToolsDbContext dbContext, ICampaignService campaignService) : IMonsterService
+public class MonsterService(ToolsDbContext dbContext) : IMonsterService
 {
     public bool MonsterIdExists(int id) => dbContext.Monsters.Find(id) != default;
 
@@ -47,10 +42,42 @@ public class MonsterService(ToolsDbContext dbContext, ICampaignService campaignS
 
     public Monster FindById(int id) => dbContext.Monsters.Find(id)!;
 
-    public void UpdateMonster(Monster monster)
+    public Monster UpdateMonster(int id, MonsterDto monsterDto)
     {
-        dbContext.Update(monster);
+        var toBeUpdated = dbContext.Monsters
+            .Include(x => x.Strength)
+            .Include(x => x.Dexterity)
+            .Include(x => x.Constitution)
+            .Include(x => x.Intelligence)
+            .Include(x => x.Wisdom)
+            .Include(x => x.Charisma)
+            .Include(x => x.Abilities)
+            .Include(x => x.Actions)
+            .Include(x => x.LegendaryActions)
+            .Single(x => x.Id == id);
+
+        //update non-navigation properties
+        dbContext.Entry(toBeUpdated).CurrentValues.SetValues(monsterDto);
+
+        //update CR
+        toBeUpdated.ChallengeRating = dbContext.ChallengeRatings.Find(monsterDto.ChallengeRatingId)!;
+
+        //ability scores
+        dbContext.Entry(toBeUpdated.Strength).CurrentValues.SetValues(monsterDto.Strength);
+        dbContext.Entry(toBeUpdated.Dexterity).CurrentValues.SetValues(monsterDto.Dexterity);
+        dbContext.Entry(toBeUpdated.Constitution).CurrentValues.SetValues(monsterDto.Constitution);
+        dbContext.Entry(toBeUpdated.Intelligence).CurrentValues.SetValues(monsterDto.Intelligence);
+        dbContext.Entry(toBeUpdated.Wisdom).CurrentValues.SetValues(monsterDto.Wisdom);
+        dbContext.Entry(toBeUpdated.Charisma).CurrentValues.SetValues(monsterDto.Charisma);
+
+        //update actions
+        toBeUpdated.Abilities = UpdateAbilityList(toBeUpdated.Abilities.ToList(), monsterDto.Abilities);
+        toBeUpdated.Actions = UpdateActionList(toBeUpdated.Actions.ToList(), monsterDto.Actions);
+        toBeUpdated.LegendaryActions = UpdateLegendaryActionList(toBeUpdated.LegendaryActions.ToList(), monsterDto.LegendaryActions);
+
         dbContext.SaveChanges();
+
+        return toBeUpdated;
     }
 
     public Monster AddMonster(string name, Campaign campaign)
@@ -58,7 +85,7 @@ public class MonsterService(ToolsDbContext dbContext, ICampaignService campaignS
         var monster = new Monster
         {
             Name = name,
-            Campaign = campaignService.FindActiveCampaign()!,
+            Campaign = campaign,
             ChallengeRating = dbContext.ChallengeRatings.OrderBy(x => x.Id).First()
         };
 
@@ -68,51 +95,62 @@ public class MonsterService(ToolsDbContext dbContext, ICampaignService campaignS
         return monster;
     }
 
-    public Monster CopyMonster(int id, string name, Campaign? targetCampaign)
+    public Monster CopyMonster(int id, string name, Campaign campaign)
     {
-        //get the monster, set the name name, and reset all IDs to 0 so they can be re-entered as new entities
-        //change tracker must be disabled
-        dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-        var monster = FindById(id);
-        monster.Id = 0;
-        monster.Name = name;
-        monster.Strength.Id = 0;
-        monster.Dexterity.Id = 0;
-        monster.Constitution.Id = 0;
-        monster.Intelligence.Id = 0;
-        monster.Wisdom.Id = 0;
-        monster.Charisma.Id = 0;
+        var newMonster = AddMonster(name, campaign);
 
-        //if being copied to another campaign
-        if (targetCampaign != null)
-        {
-            monster.Campaign = targetCampaign;
-        }
+        var sourceMonster = dbContext.Monsters
+            .Include(x => x.ChallengeRating)
+            .Include(x => x.Strength)
+            .Include(x => x.Dexterity)
+            .Include(x => x.Constitution)
+            .Include(x => x.Intelligence)
+            .Include(x => x.Wisdom)
+            .Include(x => x.Charisma)
+            .Include(x => x.Abilities)
+            .Include(x => x.Actions)
+            .Include(x => x.LegendaryActions)
+            .Single(x => x.Id == id);
 
-        monster.Abilities = monster.Abilities.Select(x =>
+        CopyEntityExceptId(newMonster, sourceMonster);
+
+        //Name is copied by CopyEntityExceptId, so need to manually set it back it to the new value
+        newMonster.Name = name;
+
+        //copy CR
+        newMonster.ChallengeRating = dbContext.ChallengeRatings.Find(sourceMonster.ChallengeRating!.Id)!;
+
+        //copy ability scores
+        CopyEntityExceptId(newMonster.Strength, sourceMonster.Strength);
+        CopyEntityExceptId(newMonster.Dexterity, sourceMonster.Dexterity);
+        CopyEntityExceptId(newMonster.Constitution, sourceMonster.Constitution);
+        CopyEntityExceptId(newMonster.Intelligence, sourceMonster.Intelligence);
+        CopyEntityExceptId(newMonster.Wisdom, sourceMonster.Wisdom);
+        CopyEntityExceptId(newMonster.Charisma, sourceMonster.Charisma);
+
+        //copy actions and abilities
+        newMonster.Abilities = sourceMonster.Abilities.Select(x => new MonsterAbility
         {
-            x.Id = 0;
-            return x;
+            Name = x.Name,
+            Description = x.Description
         }).ToList();
 
-        monster.Actions = monster.Actions.Select(x =>
+        newMonster.Actions = sourceMonster.Actions.Select(x => new MonsterAction
         {
-            x.Id = 0;
-            return x;
+            Name = x.Name,
+            Description = x.Description
         }).ToList();
 
-        monster.LegendaryActions = monster.LegendaryActions.Select(x =>
+        newMonster.LegendaryActions = sourceMonster.LegendaryActions.Select(x => new LegendaryAction
         {
-            x.Id = 0;
-            return x;
+            Name = x.Name,
+            Description = x.Description,
+            Cost = x.Cost
         }).ToList();
 
-        dbContext.Add(monster);
         dbContext.SaveChanges();
 
-        dbContext.ChangeTracker.AutoDetectChangesEnabled = true;
-
-        return monster;
+        return newMonster;
     }
 
     public void SetArchived(int id, bool isArchived)
@@ -134,60 +172,96 @@ public class MonsterService(ToolsDbContext dbContext, ICampaignService campaignS
             }).ToList();
     }
 
-    public int AddAbility(int id)
+    private List<MonsterAbility> UpdateAbilityList(List<MonsterAbility> abilityList, IEnumerable<ActionAbilityDto> updatedAbilityList)
     {
-        var monster = FindById(id);
-        var ability = new MonsterAbility();
+        UpdateOrRemoveActionAbility(abilityList, updatedAbilityList);
 
-        monster.Abilities.Add(ability);
-        dbContext.SaveChanges();
+        //if the new list has more abilities than the old one, add them here
+        if (abilityList.Count < updatedAbilityList.Count())
+        {
+            abilityList.AddRange(updatedAbilityList.Skip(abilityList.Count).Select(x => new MonsterAbility
+            {
+                Name = x.Name,
+                Description = x.Description
+            }));
+        }
 
-        return ability.Id;
+        return abilityList;
     }
 
-    public int AddAction(int id)
+    private List<MonsterAction> UpdateActionList(List<MonsterAction> actionList, IEnumerable<ActionAbilityDto> updatedActionList)
     {
-        var monster = FindById(id);
-        var action = new MonsterAction();
+        UpdateOrRemoveActionAbility(actionList, updatedActionList);
 
-        monster.Actions.Add(action);
-        dbContext.SaveChanges();
+        //if the new list has more abilities than the old one, add them here
+        if (actionList.Count < updatedActionList.Count())
+        {
+            actionList.AddRange(updatedActionList.Skip(actionList.Count).Select(x => new MonsterAction
+            {
+                Name = x.Name,
+                Description = x.Description
+            }));
+        }
 
-        return action.Id;
+        return actionList;
     }
 
-    public int AddLegendaryAction(int id)
+    private List<LegendaryAction> UpdateLegendaryActionList(List<LegendaryAction> actionList, IEnumerable<LegendaryActionDto> updatedActionList)
     {
-        var monster = FindById(id);
-        var action = new LegendaryAction();
+        UpdateOrRemoveActionAbility(actionList, updatedActionList);
 
-        monster.LegendaryActions.Add(action);
-        dbContext.SaveChanges();
+        //if the new list has more abilities than the old one, add them here
+        if (actionList.Count < updatedActionList.Count())
+        {
+            actionList.AddRange(updatedActionList.Skip(actionList.Count).Select(x => new LegendaryAction
+            {
+                Name = x.Name,
+                Description = x.Description,
+                Cost = x.Cost
+            }));
+        }
 
-        return action.Id;
+        return actionList;
     }
 
-    public void DeleteAbility(int id)
+    private void UpdateOrRemoveActionAbility<TEntity>(List<TEntity> abilityList, IEnumerable<ActionAbilityDto> updatedAbilityList) where TEntity : BaseActionAbility
     {
-        var ability = dbContext.MonsterAbilities.Find(id)!;
+        //if new list has fewer abilities than the old one, remove abilities until they are the same size
+        if (abilityList.Count > updatedAbilityList.Count())
+        {
+            var toBeRemoved = abilityList.Skip(updatedAbilityList.Count());
+            dbContext.RemoveRange(toBeRemoved);
+            abilityList.RemoveRange(updatedAbilityList.Count(), abilityList.Count - updatedAbilityList.Count());
+        }
 
-        dbContext.Remove(ability);
-        dbContext.SaveChanges();
+        //update list with the incoming values
+        abilityList = abilityList.Select((x, i) =>
+        {
+            dbContext.Entry(x).CurrentValues.SetValues(updatedAbilityList.Skip(i).Take(1).Single());
+            return x;
+        }).ToList();
     }
 
-    public void DeleteAction(int id)
+    /// <summary>
+    /// Copies the values of the <paramref name="source"/> entity into the <paramref name="target"/>
+    /// entity, except for the <c>Id</c> property
+    /// </summary>
+    /// <typeparam name="TEntity"></typeparam>
+    /// <param name="target">The entity to copy values into</param>
+    /// <param name="source">The entity to copy</param>
+    private void CopyEntityExceptId<TEntity>(TEntity target, TEntity source) where TEntity : class
     {
-        var action = dbContext.MonsterActions.Find(id)!;
+        var sourceIdProperty = source.GetType().GetProperty("Id")!;
+        var targetIdProperty = target.GetType().GetProperty("Id")!;
 
-        dbContext.Remove(action);
-        dbContext.SaveChanges();
-    }
+        //get the original source's ID
+        var sourceId = sourceIdProperty.GetValue(source);
+        //set the original source's ID as the target's so an exception isn't thrown by SetValues
+        sourceIdProperty.SetValue(source, targetIdProperty.GetValue(target)!);
 
-    public void DeleteLegendaryAction(int id)
-    {
-        var action = dbContext.LegendaryActions.Find(id)!;
-
-        dbContext.Remove(action);
-        dbContext.SaveChanges();
+        //copy non-navigation properties.
+        dbContext.Entry(target).CurrentValues.SetValues(source);
+        //set the source's ID back to it's original value
+        sourceIdProperty.SetValue(source, sourceId);
     }
 }

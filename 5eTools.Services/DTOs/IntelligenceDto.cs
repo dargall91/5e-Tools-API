@@ -1,9 +1,6 @@
-using System.ComponentModel.DataAnnotations.Schema;
+namespace _5eTools.Services.DTOs;
 
-namespace _5eTools.Data.Entities;
-
-[Table(nameof(Intelligence))]
-public class Intelligence : BaseAbilityScore
+public class IntelligenceDto : BaseAbilityScoreDto
 {
     public int Arcana { get; set; }
     public int History { get; set; }

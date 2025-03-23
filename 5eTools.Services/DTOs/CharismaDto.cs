@@ -1,9 +1,6 @@
-using System.ComponentModel.DataAnnotations.Schema;
+namespace _5eTools.Services.DTOs;
 
-namespace _5eTools.Data.Entities;
-
-[Table(nameof(Charisma))]
-public class Charisma : BaseAbilityScore
+public class CharismaDto : BaseAbilityScoreDto
 {
     public int Deception { get; set; }
     public int Intimidation { get; set; }

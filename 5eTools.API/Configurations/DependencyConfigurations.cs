@@ -14,6 +14,7 @@ public static class DependencyConfigurations
             .AddDbContextPool<ToolsDbContext>(options => options.UseMySQL(connectionString))
             .AddScoped<ICampaignService, CampaignService>()
             .AddSingleton<ICryptographyService, CryptographyService>()
-            .AddScoped<IUserService, UserService>();
+            .AddScoped<IUserService, UserService>()
+            .AddScoped<IMonsterService, MonsterService>();
     }
 }
