@@ -33,3 +33,6 @@ csharp_space_after_semicolon_in_for_statement = true
 # other things
 csharp_preserve_single_line_statements = false
 csharp_preserve_single_line_blocks = true
+
+# lists/arrays
+dotnet_style_prefer_collection_expression = false

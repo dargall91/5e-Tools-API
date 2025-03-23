@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace _5eTools.API.Controllers.V1;
 
+[Route("api/v{version:apiversion}/[controller]")]
+[ApiController]
 public class UserController(IUserService userService) : ControllerBase
 {
     [HttpPut]

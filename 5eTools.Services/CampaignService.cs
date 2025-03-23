@@ -1,7 +1,6 @@
 using _5eTools.Data;
 using _5eTools.Data.Entities;
 using _5eTools.Services.DTOs;
-using Microsoft.EntityFrameworkCore;
 
 namespace _5eTools.Services;
 
@@ -28,15 +27,13 @@ public interface ICampaignService
 
 public class CampaignService(ToolsDbContext dbContext) : ICampaignService
 {
-    private DbSet<Campaign> Campaigns => dbContext.Campaigns;
+    public bool CampaignExists(int id) => dbContext.Campaigns.Find(id) != default;
 
-    public bool CampaignExists(int id) => FindById(id) != default;
+    public IEnumerable<Campaign> FindAll() => dbContext.Campaigns.ToList();
 
-    public IEnumerable<Campaign> FindAll() => Campaigns.ToList();
+    public Campaign FindById(int id) => dbContext.Campaigns.Find(id)!;
 
-    public Campaign FindById(int id) => Campaigns.Find(id)!;
-
-    public Campaign? FindActiveCampaign() => Campaigns.SingleOrDefault(x => x.IsActive);
+    public Campaign? FindActiveCampaign() => dbContext.Campaigns.SingleOrDefault(x => x.IsActive);
 
     public Campaign AddCampaign(AddEditCampaign newCampaignDetails)
     {
@@ -45,10 +42,10 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
             Name = newCampaignDetails.Name,
             UsesInflatedHitPoints = newCampaignDetails.UsesInflatedHitPoints,
             UsesStress = newCampaignDetails.UsesStress,
-            IsActive = !Campaigns.Any()
+            IsActive = !dbContext.Campaigns.Any()
         };
 
-        Campaigns.Add(newCampaign);
+        dbContext.Campaigns.Add(newCampaign);
         dbContext.SaveChanges();
 
         return newCampaign;
