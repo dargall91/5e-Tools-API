@@ -90,6 +90,8 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
         if (monsterService.MonsterIdExists(id))
         {
             monsterService.SetArchived(id, true);
+
+            return Ok(new ResponseWrapper<bool>(true));
         }
 
         return NotFound(new ResponseWrapper<Monster>($"No Monster with ID {id} found"));
@@ -101,6 +103,8 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
         if (monsterService.MonsterIdExists(id))
         {
             monsterService.SetArchived(id, false);
+
+            return Ok(new ResponseWrapper<bool>(true));
         }
 
         return NotFound(new ResponseWrapper<Monster>($"No Monster with ID {id} found"));
@@ -111,6 +115,6 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
     {
         var monsters = monsterService.GetMonsterListItems(archived);
 
-        return Ok(new ResponseWrapper<List<MonsterListItem>>(monsters));
+        return Ok(new ResponseWrapper<List<ListItem>>(monsters));
     }
 }

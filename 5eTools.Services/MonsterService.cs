@@ -18,7 +18,7 @@ public interface IMonsterService
     Monster AddMonster(string name, Campaign campaign);
     Monster CopyMonster(int id, string name, Campaign campaign);
     void SetArchived(int id, bool isArchived);
-    List<MonsterListItem> GetMonsterListItems(bool archived);
+    List<ListItem> GetMonsterListItems(bool archived);
 }
 
 public class MonsterService(ToolsDbContext dbContext) : IMonsterService
@@ -161,11 +161,11 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         dbContext.SaveChanges();
     }
 
-    public List<MonsterListItem> GetMonsterListItems(bool archived)
+    public List<ListItem> GetMonsterListItems(bool archived)
     {
         return dbContext.Monsters
             .Where(x => x.IsArchived == archived)
-            .Select(x => new MonsterListItem
+            .Select(x => new ListItem
             {
                 Id = x.Id,
                 Name = x.Name,

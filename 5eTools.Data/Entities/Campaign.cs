@@ -21,4 +21,8 @@ public class Campaign
     public bool IsDeleted { get; set; }
 
     public bool IsFinished { get; set; }
+
+    public bool AllowsMulticlassing { get; set; }
+
+    public virtual ICollection<Subclass> Subclasses { get; } = new List<Subclass>();
 }

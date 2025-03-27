@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace _5eTools.Data.Entities;
 
-[Table(nameof(SpellSlots))]
-public class SpellSlots
+[Table(nameof(UsedSpellSlots))]
+public class UsedSpellSlots
 {
     [Key]
     public int Id { get; set; }
@@ -26,4 +26,6 @@ public class SpellSlots
     public int EigthLevel { get; set; }
 
     public int NinthLevel { get; set; }
+
+    public int Warlock { get; set; }
 }
