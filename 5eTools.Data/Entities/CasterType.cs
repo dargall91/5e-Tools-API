@@ -3,13 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace _5eTools.Data.Entities;
 
-[Table(nameof(WarlockSpellSlots))]
-public class WarlockSpellSlots
+[Table(nameof(CasterType))]
+public class CasterType
 {
     [Key]
     public int Id { get; set; }
 
-    public required string Level { get; set; }
-
-    public int Slots { get; set; }
+    public required string Name { get; set; }
 }

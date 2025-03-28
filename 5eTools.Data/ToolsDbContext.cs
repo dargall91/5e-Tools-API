@@ -10,14 +10,40 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
     public DbSet<Monster> Monsters { get; set; }
     public DbSet<ChallengeRating> ChallengeRatings { get; set; }
     public DbSet<PlayerCharacter> PlayerCharacters { get; set; }
+    public DbSet<Subclass> Subclasses { get; set; }
     public DbSet<Class> Classes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // modelBuilder.Entity<ChallengeRating>(entity =>
+        // {
+        //     entity.HasData(new List<ChallengeRating>{
+        //         new()
+        //         {
+        //             Id = 1,
+        //             CR = "0",
+        //             XP = 0,
+        //             ProficiencyBonus = 0
+        //         }
+        //     });
+        // });
+
         modelBuilder.Entity<Campaign>(entity =>
         {
             entity.HasMany(x => x.Subclasses).WithMany().UsingEntity($"{nameof(Campaign)}{nameof(Subclass)}");
         });
+
+        // entity.HasData(new List<Campaign>
+        // {
+        //     new()
+        //     {
+        //         Id = 1,
+        //         Name = "Test",
+        //         UsesInflatedHitPoints = true,
+        //         UsesStress = true,
+        //         IsActive = true,
+        //     }
+        // });
 
         modelBuilder.Entity<Monster>(entity =>
         {
@@ -49,8 +75,6 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
             entity.HasOne(x => x.Resolve).WithOne();
             entity.HasOne(x => x.Stress).WithOne();
 
-            entity.HasOne(x => x.SpellSlots).WithOne();
-            entity.HasOne(x => x.WarlockSpellSlots).WithOne();
             entity.HasOne(x => x.UsedSpellSlots).WithOne();
 
             entity.HasOne(x => x.Campaign).WithMany();
@@ -71,7 +95,7 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
 
         modelBuilder.Entity<Class>(entity =>
         {
-            entity.HasOne(x => x.CasterLevel).WithMany();
+            entity.HasOne(x => x.CasterType).WithMany();
         });
     }
 }

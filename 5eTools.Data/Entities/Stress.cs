@@ -17,6 +17,5 @@ public class Stress
 
     public int MeditationDiceUsed { get; set; }
 
-    [ForeignKey($"{nameof(Entities.StresStatus)}{nameof(Entities.StresStatus.Id)}")]
-    public virtual StresStatus? StresStatus { get; set; }
+    public int? StressStatusId { get; set; }
 }

@@ -1,6 +1,7 @@
 using _5eTools.Data;
 using _5eTools.Data.Entities;
 using _5eTools.Services.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace _5eTools.Services;
 
@@ -23,6 +24,7 @@ public interface ICampaignService
     void UpdateCampaign(int id, AddEditCampaign campaign);
     void DeleteCampaign(int id);
     void ActivateCampaign(int id);
+    List<ClassListItem> FindCampaignClassOptions(int id);
 }
 
 public class CampaignService(ToolsDbContext dbContext) : ICampaignService
@@ -83,5 +85,24 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
         }
 
         dbContext.SaveChanges();
+    }
+
+    public List<ClassListItem> FindCampaignClassOptions(int id)
+    {
+        return dbContext.Classes
+            .Include(x => x.Subclasses)
+            .ThenInclude(s => s.Campaigns.Where(c => c.Id == id))
+            .Where(c => c.Subclasses.Any(s => s.Campaigns.Count == 1))
+            .Select(c => new ClassListItem
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Subclasses = c.Subclasses.Select(s => new ListItem
+                {
+                    Id = s.Id,
+                    Name = s.Name
+                })
+            })
+            .ToList();
     }
 }

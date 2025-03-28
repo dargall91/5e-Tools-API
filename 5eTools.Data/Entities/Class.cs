@@ -15,8 +15,10 @@ public class Class
 
     public required int AverageHitDieRoll { get; set; }
 
-    [ForeignKey($"{nameof(Entities.CasterLevel)}{nameof(Entities.CasterLevel.Id)}")]
-    public virtual required CasterLevel CasterLevel { get; set; }
+    public string ClassAbilityScore { get; set; } = string.Empty;
+
+    [ForeignKey($"{nameof(Entities.CasterType)}{nameof(Entities.CasterType.Id)}")]
+    public virtual required CasterType CasterType { get; set; }
 
     public virtual ICollection<Subclass> Subclasses { get; } = new List<Subclass>();
 }

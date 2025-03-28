@@ -15,7 +15,7 @@ public class CharacterClass
 
     public bool BaseClass { get; set; }
 
-    public int ClassSaveDc { get; set; }
+    public int BaseClassSaveDc { get; set; }
 
     [ForeignKey($"{nameof(Entities.Subclass)}{nameof(Entities.Subclass.Id)}")]
     public virtual required Subclass Subclass { get; set; }

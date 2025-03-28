@@ -9,17 +9,19 @@ public class PlayerCharacter
     [Key]
     public int Id { get; set; }
 
+    public required string Name { get; set; }
+
     public int BaseArmorClass { get; set; }
 
     public int ArmorClassBonus { get; set; }
 
     public int Damage { get; set; }
 
+    public int HitPointMaximum { get; set; }
+
     public int TemporaryHitPoints { get; set; }
 
     public int MaxHitPointReduction { get; set; }
-
-    public int RolledInitiative { get; set; }
 
     public int DeathSaveFailures { get; set; }
 
@@ -30,6 +32,14 @@ public class PlayerCharacter
     public bool IsDead;
 
     public bool IsCombatant { get; set; }
+
+    public bool DwarvenToughness { get; set; }
+
+    public int SpellcasterLevel { get; set; }
+
+    public int WarlockLevel { get; set; }
+
+    public int ExhaustionLevel { get; set; }
 
     [ForeignKey($"{nameof(Entities.Strength)}{nameof(Entities.Strength.Id)}")]
     public virtual Strength Strength { get; set; } = new();
@@ -54,12 +64,6 @@ public class PlayerCharacter
 
     [ForeignKey($"{nameof(Entities.Stress)}{nameof(Entities.Stress.Id)}")]
     public Stress? Stress { get; set; }
-
-    [ForeignKey($"{nameof(Entities.SpellSlots)}{nameof(Entities.SpellSlots.Id)}")]
-    public SpellSlots? SpellSlots { get; set; }
-
-    [ForeignKey($"{nameof(Entities.WarlockSpellSlots)}{nameof(Entities.WarlockSpellSlots.Id)}")]
-    public WarlockSpellSlots? WarlockSpellSlots { get; set; }
 
     [ForeignKey($"{nameof(Entities.UsedSpellSlots)}{nameof(Entities.UsedSpellSlots.Id)}")]
     public UsedSpellSlots? UsedSpellSlots { get; set; }

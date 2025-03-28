@@ -13,8 +13,6 @@ public class Subclass
 
     public bool PrimalCompanion { get; set; }
 
-    public bool DwarvenToughness { get; set; }
-
     public bool ThirdCaster { get; set; }
 
     [ForeignKey($"{nameof(Entities.Class)}{nameof(Entities.Class.Id)}")]

@@ -1,17 +1,10 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+namespace _5eTools.Services.DTOs;
 
-namespace _5eTools.Data.Entities;
-
-[Table(nameof(PrimalCompanion))]
-public class PrimalCompanion
+public class PrimalCompanionDto
 {
-    [Key]
-    public int Id { get; set; }
-
     public required string Name { get; set; }
 
-    public int HitPointMaximum { get; set; }
+    public int HitPointMaximum;
 
     public int Damage { get; set; }
 
@@ -37,6 +30,5 @@ public class PrimalCompanion
 
     public int? CharismaOverride { get; set; }
 
-    [ForeignKey($"{nameof(Entities.PrimalCompanionType)}{nameof(Entities.PrimalCompanionType.Id)}")]
-    public virtual required PrimalCompanionType PrimalCompanionType { get; set; }
+    public int PrimalCompanionTypeId { get; set; }
 }
