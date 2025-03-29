@@ -24,5 +24,6 @@ public class Campaign
 
     public bool AllowsMulticlassing { get; set; }
 
+    [ForeignKey($"{nameof(Campaign)}{nameof(Id)}")]
     public virtual ICollection<Subclass> Subclasses { get; } = new List<Subclass>();
 }

@@ -8,7 +8,7 @@ namespace _5eTools.API.Controllers.V1;
 
 [ApiController]
 [Route("api/v{version:apiversion}/player-character")]
-public class PlayerCharacterController(PlayerCharacterService pcService, UserService userService, CampaignService campaignService) : ControllerBase
+public class PlayerCharacterController(IPlayerCharacterService pcService, IUserService userService, ICampaignService campaignService) : ControllerBase
 {
     [HttpGet("{id}")]
     public IActionResult GetById(int id)

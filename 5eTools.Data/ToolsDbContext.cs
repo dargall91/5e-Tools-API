@@ -12,6 +12,10 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
     public DbSet<PlayerCharacter> PlayerCharacters { get; set; }
     public DbSet<Subclass> Subclasses { get; set; }
     public DbSet<Class> Classes { get; set; }
+    public DbSet<ExhaustionLevel> ExhaustionLevels { get; set; }
+    public DbSet<SpellSlots> SpellSlots { get; set; }
+    public DbSet<WarlockSpellSlots> WarlockSpellSlots { get; set; }
+    public DbSet<StressStatus> StressStatuses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,7 +34,7 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
 
         modelBuilder.Entity<Campaign>(entity =>
         {
-            entity.HasMany(x => x.Subclasses).WithMany().UsingEntity($"{nameof(Campaign)}{nameof(Subclass)}");
+            entity.HasMany(x => x.Subclasses).WithMany(x => x.Campaigns).UsingEntity($"{nameof(Campaign)}{nameof(Subclass)}");
         });
 
         // entity.HasData(new List<Campaign>
@@ -101,6 +105,11 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
         modelBuilder.Entity<PrimalCompanion>(entity =>
         {
             entity.HasOne(x => x.PrimalCompanionType).WithMany();
+        });
+
+        modelBuilder.Entity<StressStatus>(entity =>
+        {
+            entity.HasOne(x => x.StressType).WithMany();
         });
     }
 }

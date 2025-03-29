@@ -6,7 +6,7 @@ namespace _5eTools.Data.Entities;
 [Table(nameof(ExhaustionLevel))]
 public class ExhaustionLevel
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     public required string Description { get; set; }

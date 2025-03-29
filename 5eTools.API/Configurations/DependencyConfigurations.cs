@@ -15,6 +15,7 @@ public static class DependencyConfigurations
             .AddScoped<ICampaignService, CampaignService>()
             .AddSingleton<ICryptographyService, CryptographyService>()
             .AddScoped<IUserService, UserService>()
-            .AddScoped<IMonsterService, MonsterService>();
+            .AddScoped<IMonsterService, MonsterService>()
+            .AddScoped<IPlayerCharacterService, PlayerCharacterService>();
     }
 }

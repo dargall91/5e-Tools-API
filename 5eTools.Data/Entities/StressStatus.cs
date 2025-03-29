@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace _5eTools.Data.Entities;
 
-[Table(nameof(StresStatus))]
-public class StresStatus
+[Table(nameof(StressStatus))]
+public class StressStatus
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     public int MinimumRoll { get; set; }

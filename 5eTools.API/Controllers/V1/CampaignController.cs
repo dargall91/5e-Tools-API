@@ -128,4 +128,17 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
 
         return NoContent();
     }
+
+    [HttpGet("{id}/classes")]
+    public IActionResult GetSubclassOptions(int id)
+    {
+        if (campaignService.CampaignExists(id))
+        {
+            var classOptions = campaignService.FindCampaignClassOptions(id);
+
+            return Ok(new ResponseWrapper<List<ClassListItem>>(classOptions));
+        }
+
+        return NotFound(new ResponseWrapper<Campaign>($"No Campaign with ID {id} found"));
+    }
 }

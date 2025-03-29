@@ -6,7 +6,7 @@ namespace _5eTools.Data.Entities;
 [Table(nameof(CasterType))]
 public class CasterType
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     public required string Name { get; set; }
