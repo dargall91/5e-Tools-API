@@ -8,9 +8,9 @@ namespace _5eTools.Services;
 
 public interface IPlayerCharacterService
 {
-    public bool PcExists(int id);
-    public PlayerCharacterDto FindDto(int id);
-    public PlayerCharacterDto Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
+    bool PcExists(int id);
+    PlayerCharacterDto FindDto(int id);
+    (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
     PlayerCharacterDto Update(int id, PlayerCharacterDto pcDto);
     void Kill(int id);
     void Revive(int id);
@@ -52,7 +52,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         return pc;
     }
 
-    public PlayerCharacterDto Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
+    public (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
     {
         var newPc = new PlayerCharacter
         {
@@ -87,7 +87,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         pcDto.HitPointMaximum = newPc.HitPointMaximum;
         dbContext.SaveChanges();
 
-        return FindDto(newPc.Id);
+        return (FindDto(newPc.Id), newPc.Id);
     }
 
     public PlayerCharacterDto Update(int id, PlayerCharacterDto pcDto)

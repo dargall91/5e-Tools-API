@@ -8,6 +8,8 @@ public interface IUserService
 {
     bool UserExists(int id);
 
+    User FindById(int id);
+
     /// <summary>
     /// Validates a login attempt.
     /// </summary>
@@ -45,6 +47,9 @@ public interface IUserService
 public class UserService(ICryptographyService cryptographyService, ToolsDbContext dbContext) : IUserService
 {
     public bool UserExists(int id) => dbContext.Users.Find(id) != default;
+
+
+    public User FindById(int id) => dbContext.Users.Find(id)!;
 
     public LoginAttemptResult AttemptLogin(UserDto loginAttempt)
     {

@@ -97,5 +97,10 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
         {
             entity.HasOne(x => x.CasterType).WithMany();
         });
+
+        modelBuilder.Entity<PrimalCompanion>(entity =>
+        {
+            entity.HasOne(x => x.PrimalCompanionType).WithMany();
+        });
     }
 }
