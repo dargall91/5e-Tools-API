@@ -125,11 +125,6 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         if (toBeUpdated.Stress != default)
         {
-            if (pcDto.Stress != null)
-            {
-                dbContext.Entry(toBeUpdated.Stress).CurrentValues.SetValues(pcDto.Stress!);
-            }
-
             toBeUpdated.Stress.StressThreshold = BaseStressThreshold + (CalculateAbilityScoreModifier(pcDto.Resolve!.Score) * StressThresholdModifier);
             toBeUpdated.Stress.StressMaximum = toBeUpdated.Stress.StressThreshold * 2;
         }
@@ -168,6 +163,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             stress.StressLevel = stressDto.StressLevel;
             stress.MeditationDiceUsed = stressDto.MeditationDiceUsed;
             stress.StressStatusId = stressDto.StressStatusId;
+            //preserve db values of threshold/max since they are not manually set
             stressDto.StressThreshold = stress.StressThreshold;
             stressDto.StressMaximum = stress.StressMaximum;
 
