@@ -6,7 +6,7 @@ namespace _5eTools.Data.Entities;
 [Table(nameof(WarlockSpellSlots))]
 public class WarlockSpellSlots
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     public required string Level { get; set; }

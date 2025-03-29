@@ -6,7 +6,7 @@ namespace _5eTools.Data.Entities;
 [Table(nameof(StressType))]
 public class StressType
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     public required string Name { get; set; }

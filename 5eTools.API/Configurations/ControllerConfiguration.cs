@@ -8,6 +8,13 @@ public static class ControllerConfiguration
     public static IServiceCollection AddControllerConfigurations(this IServiceCollection services)
     {
         services
+            .AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin();
+                });
+            })
             .AddControllers()
             .AddJsonOptions(options =>
             {
@@ -17,19 +24,19 @@ public static class ControllerConfiguration
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
 
-            services
-                .AddEndpointsApiExplorer()
-                .AddApiVersioning(options =>
-                {
-                    options.AssumeDefaultVersionWhenUnspecified = true;
-                    options.ReportApiVersions = true;
-                    options.ApiVersionReader = new UrlSegmentApiVersionReader();
-                })
-                .AddApiExplorer(options =>
-                {
-                    options.GroupNameFormat = "'v'VVV";
-                    options.SubstituteApiVersionInUrl = true;
-                });
+        services
+            .AddEndpointsApiExplorer()
+            .AddApiVersioning(options =>
+            {
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
 
         return services;
     }

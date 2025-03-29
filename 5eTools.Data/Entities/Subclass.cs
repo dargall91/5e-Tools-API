@@ -18,6 +18,6 @@ public class Subclass
     [ForeignKey($"{nameof(Entities.Class)}{nameof(Entities.Class.Id)}")]
     public virtual required Class Class { get; set; }
 
-    // [ForeignKey($"{nameof(Entities.Campaign)}{nameof(Entities.Campaign.Id)}")]
+    [ForeignKey($"{nameof(Subclass)}{nameof(Id)}")]
     public required virtual ICollection<Campaign> Campaigns { get; set; }
 }

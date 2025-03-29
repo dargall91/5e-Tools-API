@@ -6,7 +6,7 @@ namespace _5eTools.Data.Entities;
 [Table(nameof(SpellSlots))]
 public class SpellSlots
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     public int FirstLevel { get; set; }
