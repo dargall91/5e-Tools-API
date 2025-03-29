@@ -9,7 +9,7 @@ public class WarlockSpellSlots
     [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
-    public required string Level { get; set; }
+    public required int Level { get; set; }
 
     public int Slots { get; set; }
 }
