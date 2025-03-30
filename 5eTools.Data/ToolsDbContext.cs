@@ -16,38 +16,15 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
     public DbSet<SpellSlots> SpellSlots { get; set; }
     public DbSet<WarlockSpellSlots> WarlockSpellSlots { get; set; }
     public DbSet<StressStatus> StressStatuses { get; set; }
+    public DbSet<Encounter> Encounters { get; set; }
+    public DbSet<EncounterXpThreshold> EncounterXpThresholds { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // modelBuilder.Entity<ChallengeRating>(entity =>
-        // {
-        //     entity.HasData(new List<ChallengeRating>{
-        //         new()
-        //         {
-        //             Id = 1,
-        //             CR = "0",
-        //             XP = 0,
-        //             ProficiencyBonus = 0
-        //         }
-        //     });
-        // });
-
         modelBuilder.Entity<Campaign>(entity =>
         {
             entity.HasMany(x => x.Subclasses).WithMany(x => x.Campaigns).UsingEntity($"{nameof(Campaign)}{nameof(Subclass)}");
         });
-
-        // entity.HasData(new List<Campaign>
-        // {
-        //     new()
-        //     {
-        //         Id = 1,
-        //         Name = "Test",
-        //         UsesInflatedHitPoints = true,
-        //         UsesStress = true,
-        //         IsActive = true,
-        //     }
-        // });
 
         modelBuilder.Entity<Monster>(entity =>
         {
@@ -110,6 +87,12 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
         modelBuilder.Entity<StressStatus>(entity =>
         {
             entity.HasOne(x => x.StressType).WithMany();
+        });
+
+        modelBuilder.Entity<EncounterMonster>(entity =>
+        {
+            entity.HasOne(x => x.Encounter).WithMany(x => x.EncounterMonsters);
+            entity.HasOne(x => x.Monster).WithMany();
         });
     }
 }
