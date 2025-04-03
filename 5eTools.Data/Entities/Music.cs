@@ -12,4 +12,8 @@ public class Music
     public required string Name { get; set; }
 
     public required string FileName { get; set; }
+
+    public required float LoopStartTime { get; set; }
+
+    public required float LoopEndTime { get; set; }
 }
