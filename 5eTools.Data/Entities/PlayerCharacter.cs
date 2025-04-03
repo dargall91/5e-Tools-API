@@ -29,7 +29,7 @@ public class PlayerCharacter
 
     public bool ToughFeat { get; set; }
 
-    public bool IsDead;
+    public bool IsDead { get; set; }
 
     public bool IsCombatant { get; set; }
 
@@ -40,6 +40,10 @@ public class PlayerCharacter
     public int WarlockLevel { get; set; }
 
     public int ExhaustionLevel { get; set; }
+
+    public int InitiativeRoll { get; set; }
+
+    public int InitiativeBonus { get; set; }
 
     [ForeignKey($"{nameof(Entities.Strength)}{nameof(Entities.Strength.Id)}")]
     public virtual Strength Strength { get; set; } = new();

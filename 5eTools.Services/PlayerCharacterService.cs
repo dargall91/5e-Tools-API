@@ -16,6 +16,7 @@ public interface IPlayerCharacterService
     void Revive(int id);
     StressDto UpdateStress(int pcId, StressDto stressDto);
     PlayerCharacterDto LongRest(int id, int extendedRestDuration);
+    PlayerCharacterCombatantDto UpdateCombatantData(PlayerCharacterCombatantDto pcDto);
 }
 
 public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacterService
@@ -280,6 +281,20 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         dbContext.SaveChanges();
 
         return FindDto(id);
+    }
+
+    public PlayerCharacterCombatantDto UpdateCombatantData(PlayerCharacterCombatantDto pcDto)
+    {
+        var toBeUpdated = dbContext.PlayerCharacters.Find(pcDto.PlayerCharacterId)!;
+
+        dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
+        dbContext.SaveChanges();
+
+        //get the latest AC/Name (though name should not change)
+        pcDto.PlayerCharacterName = toBeUpdated.Name;
+        pcDto.TotalArmorClass = toBeUpdated.BaseArmorClass + toBeUpdated.ArmorClassBonus;
+
+        return pcDto;
     }
 
     private PlayerCharacterDto PlayerCharacterToDto(PlayerCharacter pc)
