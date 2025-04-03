@@ -16,6 +16,8 @@ public static class DependencyConfigurations
             .AddSingleton<ICryptographyService, CryptographyService>()
             .AddScoped<IUserService, UserService>()
             .AddScoped<IMonsterService, MonsterService>()
-            .AddScoped<IPlayerCharacterService, PlayerCharacterService>();
+            .AddScoped<IPlayerCharacterService, PlayerCharacterService>()
+            .AddScoped<IEncounterService, EncounterService>()
+            .AddScoped<IMusicService, MusicService>();
     }
 }
