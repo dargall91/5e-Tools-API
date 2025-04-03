@@ -115,7 +115,7 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         {
             pcService.Kill(id);
 
-            return Ok(new ResponseWrapper<bool>());
+            return Ok(new ResponseWrapper<bool>(true));
         }
 
         return NotFound(new ResponseWrapper<bool>($"No PC with ID {id} found"));
@@ -128,9 +128,22 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         {
             pcService.Revive(id);
 
-            return Ok(new ResponseWrapper<bool>());
+            return Ok(new ResponseWrapper<bool>(true));
         }
 
         return NotFound(new ResponseWrapper<bool>($"No PC with ID {id} found"));
+    }
+
+    [HttpPost("/combatant")]
+    public IActionResult UpdateCombatantData(PlayerCharacterCombatantDto pcDto)
+    {
+        if (pcService.PcExists(pcDto.PlayerCharacterId))
+        {
+            var updatedDto = pcService.UpdateCombatantData(pcDto);
+
+            return Ok(new ResponseWrapper<PlayerCharacterCombatantDto>(updatedDto));
+        }
+
+        return NotFound(new ResponseWrapper<PlayerCharacterCombatantDto>($"No PC with ID {pcDto.PlayerCharacterId} found"));
     }
 }

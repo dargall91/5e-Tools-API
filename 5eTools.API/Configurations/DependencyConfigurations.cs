@@ -18,6 +18,7 @@ public static class DependencyConfigurations
             .AddScoped<IMonsterService, MonsterService>()
             .AddScoped<IPlayerCharacterService, PlayerCharacterService>()
             .AddScoped<IEncounterService, EncounterService>()
-            .AddScoped<IMusicService, MusicService>();
+            .AddScoped<IMusicService, MusicService>()
+            .AddSingleton<ICombatantService, CombatantService>();
     }
 }
