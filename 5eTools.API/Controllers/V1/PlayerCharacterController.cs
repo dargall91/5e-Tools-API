@@ -152,13 +152,11 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
 
         if (campaignService.CampaignExists(campaignId))
         {
-            var campaign = campaignService.FindById(campaignId);
-
-            if (campaign.IsDeleted)
+            if (campaignService.IsCampaignDeleted(campaignId))
             {
                 errors.Add("Selected campaign does not exist");
             }
-            else if (campaign.IsFinished)
+            else if (campaignService.IsCampaignFinished(campaignId))
             {
                 errors.Add("Selected is complete - new characters cannot be added");
             }

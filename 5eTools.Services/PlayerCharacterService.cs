@@ -362,29 +362,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 })
                 .ToList(),
             ExhaustionLevels = dbContext.ExhaustionLevels.ToList(),
-            PrimalCompanionTypes = dbContext.PrimalCompanionTypes.ToList(),
-            Classes = dbContext.Classes
-                .Include(x => x.Subclasses)
-                .ThenInclude(x => x.Campaigns)
-                .Where(x => x.Subclasses.Any(s => s.Campaigns.Any(c => c.Id == campaignId)))
-                .Select(x => new ClassDto
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    HitDieSize = x.HitDieSize,
-                    ClassAbilityScore = x.ClassAbilityScore,
-                    Subclasses = x.Subclasses
-                        .Where(s => s.Campaigns.Any(c => c.Id == campaignId))
-                        .Select(s => new SubclassDto
-                        {
-                            Id = s.Id,
-                            Name = s.Name,
-                            ClassName = x.Name,
-                            PrimalCompanion = s.HasPrimalCompanion,
-                            ClassHitDieSize = x.HitDieSize,
-                            JackOfAllTrades = x.Id == Classes.Bard
-                        })
-                })
+            PrimalCompanionTypes = dbContext.PrimalCompanionTypes.ToList()
         };
     }
 

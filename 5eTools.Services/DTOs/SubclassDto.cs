@@ -10,7 +10,7 @@ public class SubclassDto
 
     public required bool PrimalCompanion { get; set; }
 
-    public required bool JackOfAllTrades { get; set; }
+    public bool JackOfAllTrades { get; set; }
 
-    public required int ClassHitDieSize { get; set; }
+    public int ClassHitDieSize { get; set; }
 }

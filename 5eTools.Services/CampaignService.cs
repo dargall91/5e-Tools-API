@@ -8,7 +8,7 @@ namespace _5eTools.Services;
 public interface ICampaignService
 {
     bool CampaignExists(int id);
-    IEnumerable<Campaign> FindAll();
+    List<CampaignDto> FindAll();
 
     /// <summary>
     /// Finds a <see cref="Campaign"/> by it's ID. A Campaign with this ID assumed
@@ -19,32 +19,61 @@ public interface ICampaignService
     /// <returns>The <see cref="Campaign"/></returns>
     Campaign FindById(int id);
 
-    Campaign? FindActiveCampaign();
-    Campaign AddCampaign(AddEditCampaign campaign);
+    CampaignDto FindDtoById(int id);
+
+    CampaignDto? FindActiveCampaign();
+    Campaign AddCampaign(AddEditCampaign campaign, int userId);
     void UpdateCampaign(int id, AddEditCampaign campaign);
     void DeleteCampaign(int id);
     void ActivateCampaign(int id);
-    List<ClassListItem> FindCampaignClassOptions(int id);
+    bool IsCampaignDeleted(int id);
+    bool IsCampaignFinished(int id);
 }
 
 public class CampaignService(ToolsDbContext dbContext) : ICampaignService
 {
     public bool CampaignExists(int id) => dbContext.Campaigns.Find(id) != default;
 
-    public IEnumerable<Campaign> FindAll() => dbContext.Campaigns.ToList();
+    public List<CampaignDto> FindAll()
+    {
+        return dbContext.Campaigns
+            .Include(x => x.Subclasses)
+            .ThenInclude(x => x.Class)
+            .Select(x => CampaignToDto(x))
+            .ToList();
+    }
 
     public Campaign FindById(int id) => dbContext.Campaigns.Find(id)!;
 
-    public Campaign? FindActiveCampaign() => dbContext.Campaigns.SingleOrDefault(x => x.IsActive);
+    public CampaignDto FindDtoById(int id)
+    {
+        var campaign = dbContext.Campaigns
+            .Include(x => x.Subclasses)
+            .ThenInclude(x => x.Class)
+            .Single();
 
-    public Campaign AddCampaign(AddEditCampaign newCampaignDetails)
+        return CampaignToDto(campaign);
+    }
+
+    public CampaignDto? FindActiveCampaign()
+    {
+        var campaign = dbContext.Campaigns
+            .Include(x => x.Subclasses)
+            .ThenInclude(x => x.Class)
+            .SingleOrDefault();
+
+        return campaign == default ? null : CampaignToDto(campaign);
+    }
+
+    public Campaign AddCampaign(AddEditCampaign newCampaignDetails, int userId)
     {
         var newCampaign = new Campaign
         {
             Name = newCampaignDetails.Name,
             UsesInflatedHitPoints = newCampaignDetails.UsesInflatedHitPoints,
             UsesStress = newCampaignDetails.UsesStress,
-            IsActive = !dbContext.Campaigns.Any()
+            IsActive = !dbContext.Campaigns.Any(),
+            CampaignOwner = dbContext.Users.Find(userId)!
         };
 
         dbContext.Campaigns.Add(newCampaign);
@@ -55,17 +84,15 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
 
     public void UpdateCampaign(int id, AddEditCampaign updatedCampaignDetails)
     {
-        var campaignToEdit = FindById(id);
-        campaignToEdit.Name = updatedCampaignDetails.Name;
-        campaignToEdit.UsesInflatedHitPoints = updatedCampaignDetails.UsesInflatedHitPoints;
-        campaignToEdit.UsesStress = updatedCampaignDetails.UsesStress;
+        var campaignToEdit = FindDtoById(id);
+        dbContext.Entry(campaignToEdit).CurrentValues.SetValues(updatedCampaignDetails);
 
         dbContext.SaveChanges();
     }
 
     public void DeleteCampaign(int id)
     {
-        var campaign = FindById(id);
+        var campaign = dbContext.Campaigns.Find(id)!;
         campaign.IsDeleted = true;
 
         dbContext.SaveChanges();
@@ -73,7 +100,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
 
     public void ActivateCampaign(int id)
     {
-        var campaign = FindById(id)!;
+        var campaign = dbContext.Campaigns.Find(id)!;
 
         campaign.IsActive = true;
 
@@ -87,22 +114,41 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
         dbContext.SaveChanges();
     }
 
-    public List<ClassListItem> FindCampaignClassOptions(int id)
+    public bool IsCampaignDeleted(int id)
     {
-        return dbContext.Classes
-            .Include(x => x.Subclasses)
-            .ThenInclude(s => s.Campaigns.Where(c => c.Id == id))
-            .Where(c => c.Subclasses.Any(s => s.Campaigns.Count == 1))
-            .Select(c => new ClassListItem
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Subclasses = c.Subclasses.Select(s => new ListItem
+        return dbContext.Campaigns.Find(id)!.IsDeleted;
+    }
+
+    public bool IsCampaignFinished(int id)
+    {
+        return dbContext.Campaigns.Find(id)!.IsFinished;
+    }
+
+    private CampaignDto CampaignToDto(Campaign campaign)
+    {
+        return new CampaignDto
+        {
+            CampaignId = campaign.Id,
+            Name = campaign.Name,
+            UsesInflatedHitPoints = campaign.UsesInflatedHitPoints,
+            UsesStress = campaign.UsesStress,
+            AllowsMulticlassing = campaign.AllowsMulticlassing,
+            Classes = campaign.Subclasses
+                .GroupBy(x => x.Class.Id)
+                .Select(x => new ClassDto
                 {
-                    Id = s.Id,
-                    Name = s.Name
+                    Id = x.Key,
+                    Name = x.First().Class.Name,
+                    HitDieSize = x.First().Class.HitDieSize,
+                    ClassAbilityScore = x.First().Class.ClassAbilityScore,
+                    Subclasses = x.Select(s => new SubclassDto
+                    {
+                        Id = s.Id,
+                        Name = s.Name,
+                        ClassName = s.Class.Name,
+                        PrimalCompanion = s.HasPrimalCompanion
+                    })
                 })
-            })
-            .ToList();
+        };
     }
 }

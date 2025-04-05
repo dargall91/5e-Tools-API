@@ -7,5 +7,4 @@ public class PlayerCharacterMasterData
     public required IEnumerable<StressStatusDto> StressStatuses { get; set; }
     public required IEnumerable<ExhaustionLevel> ExhaustionLevels { get; set; }
     public required IEnumerable<PrimalCompanionType> PrimalCompanionTypes { get; set; }
-    public required IEnumerable<ClassDto> Classes { get; set; }
 }

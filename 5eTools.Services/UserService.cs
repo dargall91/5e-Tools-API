@@ -48,7 +48,6 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
 {
     public bool UserExists(int id) => dbContext.Users.Find(id) != default;
 
-
     public User FindById(int id) => dbContext.Users.Find(id)!;
 
     public LoginAttemptResult AttemptLogin(UserDto loginAttempt)
