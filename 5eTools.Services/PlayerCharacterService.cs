@@ -10,13 +10,16 @@ public interface IPlayerCharacterService
 {
     bool PcExists(int id);
     PlayerCharacterDto FindDto(int id);
+    List<PlayerCharacterDto> GetByCampaignAndUser(int campaignId, int userId, bool isDead);
     (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
-    PlayerCharacterDto Update(int id, PlayerCharacterDto pcDto);
+    PlayerCharacterDto Update(PlayerCharacterDto pcDto);
+    PlayerCharacterDto UpdateBase(PlayerCharacterDto pcDto);
     void Kill(int id);
     void Revive(int id);
     StressDto UpdateStress(int pcId, StressDto stressDto);
     PlayerCharacterDto LongRest(int id, int extendedRestDuration);
     PlayerCharacterCombatantDto UpdateCombatantData(PlayerCharacterCombatantDto pcDto);
+    PlayerCharacterMasterData MasterData(int campaignId);
 }
 
 public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacterService
@@ -52,6 +55,32 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Single();
 
         return pc;
+    }
+
+    public List<PlayerCharacterDto> GetByCampaignAndUser(int campaignId, int userId, bool isDead)
+    {
+        return dbContext.PlayerCharacters
+            .Include(x => x.Strength)
+            .Include(x => x.Dexterity)
+            .Include(x => x.Constitution)
+            .Include(x => x.Intelligence)
+            .Include(x => x.Wisdom)
+            .Include(x => x.Charisma)
+            .Include(x => x.Resolve)
+            .Include(x => x.Stress)
+            .Include(x => x.CharacterClasses)
+                .ThenInclude(x => x.PrimalCompanion)
+                    .ThenInclude(x => x!.PrimalCompanionType)
+            .Include(x => x.CharacterClasses)
+                .ThenInclude(x => x.Subclass)
+                .ThenInclude(x => x.Class)
+                .ThenInclude(x => x.CasterType)
+            .Include(x => x.UsedSpellSlots)
+            .Include(x => x.Campaign)
+            .Include(x => x.User)
+            .Where(x => x.Campaign.Id == campaignId && x.User.Id == userId && x.IsDead == isDead)
+            .Select(PlayerCharacterToDto)
+            .ToList();
     }
 
     public (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
@@ -91,7 +120,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         return (FindDto(newPc.Id), newPc.Id);
     }
 
-    public PlayerCharacterDto Update(int id, PlayerCharacterDto pcDto)
+    public PlayerCharacterDto Update(PlayerCharacterDto pcDto)
     {
         var toBeUpdated = dbContext.PlayerCharacters
             .Include(x => x.Strength)
@@ -111,7 +140,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 .ThenInclude(x => x.CasterType)
             .Include(x => x.UsedSpellSlots)
             .Include(x => x.Campaign)
-            .Single(x => x.Id == id);
+            .Single(x => x.Id == pcDto.PlayerCharacterId);
 
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
         UpdateAbilityScores(toBeUpdated, pcDto);
@@ -119,9 +148,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         UpdateMaxHitPoints(toBeUpdated);
         UpdateCasterLevels(toBeUpdated);
 
-        if (pcDto.UsedSpellSlotsDto != default)
+        if (pcDto.UsedSpellSlots != default)
         {
-            dbContext.Entry(toBeUpdated.UsedSpellSlots!).CurrentValues.SetValues(pcDto.UsedSpellSlotsDto);
+            dbContext.Entry(toBeUpdated.UsedSpellSlots!).CurrentValues.SetValues(pcDto.UsedSpellSlots);
         }
 
         if (toBeUpdated.Stress != default)
@@ -132,7 +161,17 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         dbContext.SaveChanges();
 
-        return FindDto(id);
+        return FindDto(pcDto.PlayerCharacterId);
+    }
+
+    public PlayerCharacterDto UpdateBase(PlayerCharacterDto pcDto)
+    {
+        var toBeUpdated = dbContext.PlayerCharacters.Find(pcDto.PlayerCharacterId)!;
+
+        dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
+        dbContext.SaveChanges();
+
+        return pcDto;
     }
 
     public void Kill(int id)
@@ -210,6 +249,11 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         var totalLevels = pc.CharacterClasses.Sum(x => x.Level);
         var hitDiceToRegain = (int) Math.Round(totalLevels / 2.0, MidpointRounding.ToNegativeInfinity);
+        //minimum of one die will be regained
+        if (hitDiceToRegain < 1)
+        {
+            hitDiceToRegain = 1;
+        }
         var totalRegained = 0;
 
         //optimize hit dice regained by prioritizing largest hit dice first
@@ -237,7 +281,11 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 characterClass.PrimalCompanion.Damage = 0;
                 characterClass.PrimalCompanion.TemporaryHitPoints = 0;
                 var companionDiceToRegain = (int) Math.Round(characterClass.Level / 2.0, MidpointRounding.ToNegativeInfinity);
-
+                //minimum of one die will be regained
+                if (companionDiceToRegain < 1)
+                {
+                    companionDiceToRegain = 1;
+                }
                 //if the companion has used less dice than what can be regained, regain them all
                 if (characterClass.PrimalCompanion.HitDiceUsed < companionDiceToRegain)
                 {
@@ -262,7 +310,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 pc.Stress.MeditationDiceUsed -= MeditationDiceRegained;
             }
 
-            //if stress is aboe threshold, it becomes the threshold
+            //if stress is above threshold, it becomes the threshold
             //otherwise lose 50. If currently at 50 or less, lose it all
             if (pc.Stress.StressLevel > pc.Stress.StressThreshold)
             {
@@ -297,10 +345,54 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         return pcDto;
     }
 
+    public PlayerCharacterMasterData MasterData(int campaignId)
+    {
+        return new PlayerCharacterMasterData
+        {
+            StressStatuses = dbContext.StressStatuses
+                .Include(x => x.StressType)
+                .Select(x => new StressStatusDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    MinimumRoll = x.MaximumRoll,
+                    MaximumRoll = x.MaximumRoll,
+                    StressType = x.StressType.Name
+                })
+                .ToList(),
+            ExhaustionLevels = dbContext.ExhaustionLevels.ToList(),
+            PrimalCompanionTypes = dbContext.PrimalCompanionTypes.ToList(),
+            Classes = dbContext.Classes
+                .Include(x => x.Subclasses)
+                .ThenInclude(x => x.Campaigns)
+                .Where(x => x.Subclasses.Any(s => s.Campaigns.Any(c => c.Id == campaignId)))
+                .Select(x => new ClassDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    HitDieSize = x.HitDieSize,
+                    ClassAbilityScore = x.ClassAbilityScore,
+                    Subclasses = x.Subclasses
+                        .Where(s => s.Campaigns.Any(c => c.Id == campaignId))
+                        .Select(s => new SubclassDto
+                        {
+                            Id = s.Id,
+                            Name = s.Name,
+                            ClassName = x.Name,
+                            PrimalCompanion = s.HasPrimalCompanion,
+                            ClassHitDieSize = x.HitDieSize,
+                            JackOfAllTrades = x.Id == Classes.Bard
+                        })
+                })
+        };
+    }
+
     private PlayerCharacterDto PlayerCharacterToDto(PlayerCharacter pc)
     {
         return new PlayerCharacterDto
         {
+            PlayerCharacterId = pc.Id,
             Name = pc.Name,
             BaseArmorClass = pc.BaseArmorClass,
             ArmorClassBonus = pc.ArmorClassBonus,
@@ -314,6 +406,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             ExhaustionLevel = pc.ExhaustionLevel,
             SpellcasterLevel = pc.SpellcasterLevel,
             WarlockLevel = pc.WarlockLevel,
+            ProficiencyBonus = dbContext.ProficiencyBonuses.Find(pc.CharacterClasses.Sum(x => x.Level))!.Bonus,
             Strength = new StrengthDto
             {
                 Score = pc.Strength.Score,
@@ -378,7 +471,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                     MeditationDiceUsed = pc.Stress.MeditationDiceUsed,
                     StressStatusId = pc.Stress.StressStatusId
                 },
-            UsedSpellSlotsDto = pc.UsedSpellSlots == default
+            SpellSlots = pc.SpellcasterLevel > 0 ? dbContext.SpellSlots.Find(pc.SpellcasterLevel) : null,
+            WarlockSpellSlots = pc.WarlockLevel > 0 ? dbContext.WarlockSpellSlots.Find(pc.SpellcasterLevel) : null,
+            UsedSpellSlots = pc.UsedSpellSlots == default
                 ? null
                 : new UsedSpellSlotsDto
                 {
@@ -399,13 +494,22 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 HitDiceUsed = x.HitDiceUsed,
                 BaseClass = x.BaseClass,
                 ClassSaveDc = x.BaseClassSaveDc,
-                SubclassId = x.Subclass.Id,
-                PrimalCompanionDto = x.PrimalCompanion == default
+                Subclass = new SubclassDto
+                {
+                    Id = x.Subclass.Id,
+                    Name = x.Subclass.Name,
+                    ClassName = x.Subclass.Class.Name,
+                    PrimalCompanion = x.Subclass.HasPrimalCompanion,
+                    ClassHitDieSize = x.Subclass.Class.HitDieSize,
+                    JackOfAllTrades = x.Subclass.Class.Id == Classes.Bard && x.Level > 1
+                },
+                PrimalCompanion = x.PrimalCompanion == default
                     ? null
                     : new PrimalCompanionDto
                     {
                         Name = x.PrimalCompanion.Name,
                         HitPointMaximum = x.PrimalCompanion.HitPointMaximum,
+                        ArmorClassBonus = x.PrimalCompanion.ArmorClassBonus,
                         Damage = x.PrimalCompanion.Damage,
                         MaxHitPointReduction = x.PrimalCompanion.MaxHitPointReduction,
                         TemporaryHitPoints = x.PrimalCompanion.TemporaryHitPoints,
@@ -418,7 +522,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                         IntelligenceOverride = x.PrimalCompanion.IntelligenceOverride,
                         WisdomOverride = x.PrimalCompanion.WisdomOverride,
                         CharismaOverride = x.PrimalCompanion.CharismaOverride,
-                        PrimalCompanionTypeId = x.PrimalCompanion.PrimalCompanionType.Id
+                        PrimalCompanionType = x.PrimalCompanion.PrimalCompanionType
                     }
             })
         };
@@ -445,7 +549,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         var currentSubclassIds = pc.CharacterClasses.Select(x => x.Subclass.Id);
         var newSubclassIds = characterClassDtos
-            .Select(cc => cc.SubclassId)
+            .Select(cc => cc.Subclass.Id)
             .Where(x => !currentSubclassIds.Contains(x));
 
         var newSubclasses = dbContext.Subclasses
@@ -455,7 +559,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Select(x => new CharacterClass
             {
                 Subclass = x,
-                PrimalCompanion = x.PrimalCompanion
+                PrimalCompanion = x.HasPrimalCompanion
                     ? new PrimalCompanion
                     {
                         Name = "Primal Companion",
@@ -474,16 +578,16 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         foreach (var characterClass in pc.CharacterClasses)
         {
-            var characterClassDto = characterClassDtos.Single(x => x.SubclassId == characterClass.Subclass.Id);
+            var characterClassDto = characterClassDtos.Single(x => x.Subclass.Id == characterClass.Subclass.Id);
             dbContext.Entry(characterClass).CurrentValues.SetValues(characterClassDto);
 
             //set primal companion
             if (characterClass.PrimalCompanion != null)
             {
-                var companionDto = characterClassDto.PrimalCompanionDto!;
+                var companionDto = characterClassDto.PrimalCompanion!;
                 dbContext.Entry(characterClass.PrimalCompanion).CurrentValues.SetValues(companionDto);
 
-                characterClass.PrimalCompanion.PrimalCompanionType = dbContext.Find<PrimalCompanionType>(companionDto.PrimalCompanionTypeId)!;
+                characterClass.PrimalCompanion.PrimalCompanionType = dbContext.Find<PrimalCompanionType>(companionDto.PrimalCompanionType.Id)!;
                 characterClass.PrimalCompanion.HitPointMaximum = characterClass.PrimalCompanion.PrimalCompanionType.HitPointMultiplier * (characterClass.Level + 1);
                 companionDto.HitPointMaximum = characterClass.PrimalCompanion.HitPointMaximum;
             }

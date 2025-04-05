@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _5eTools.Data;
 
@@ -10,9 +11,11 @@ using _5eTools.Data;
 namespace _5eTools.Data.Migrations
 {
     [DbContext(typeof(ToolsDbContext))]
-    partial class ToolsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250404162422_AddProficiencyBonus")]
+    partial class AddProficiencyBonus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -721,9 +724,6 @@ namespace _5eTools.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("ArmorClassBonus")
-                        .HasColumnType("int");
-
                     b.Property<int?>("CharismaOverride")
                         .HasColumnType("int");
 
@@ -1001,12 +1001,12 @@ namespace _5eTools.Data.Migrations
                     b.Property<int>("ClassId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HasPrimalCompanion")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("PrimalCompanion")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("ThirdCaster")
                         .HasColumnType("tinyint(1)");

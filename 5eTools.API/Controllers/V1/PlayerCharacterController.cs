@@ -1,5 +1,4 @@
 using _5eTools.API.Models;
-using _5eTools.Data.Entities;
 using _5eTools.Services;
 using _5eTools.Services.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +9,17 @@ namespace _5eTools.API.Controllers.V1;
 [Route("api/v{version:apiversion}/player-character")]
 public class PlayerCharacterController(IPlayerCharacterService pcService, IUserService userService, ICampaignService campaignService) : ControllerBase
 {
+    [HttpGet("master-data")]
+    public IActionResult MasterData(int campaignId)
+    {
+        if (campaignService.CampaignExists(campaignId))
+        {
+            return Ok(new ResponseWrapper<PlayerCharacterMasterData>(pcService.MasterData(campaignId)));
+        }
+
+        return BadRequest(new ResponseWrapper<bool>($"Invalid Campaign ID: {campaignId}"));
+    }
+
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
@@ -21,53 +31,31 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         return NotFound(new ResponseWrapper<bool>($"No PC with ID {id} found"));
     }
 
-    [HttpPut]
-    public IActionResult CreatePlayerCharacter(PlayerCharacterDto pcDto, int campaignId, int userId)
+    [HttpGet]
+    public IActionResult GetByCampaignAndUser(int campaignId, int userId, bool isDead)
     {
-        var errors = new List<string>();
-        Campaign? campaign = null;
-        User? user = null;
-
-        if (campaignService.CampaignExists(campaignId))
-        {
-            campaign = campaignService.FindById(campaignId);
-
-            if (campaign.IsDeleted)
-            {
-                errors.Add("Selected campaign does not exist");
-            }
-            else if (campaign.IsFinished)
-            {
-                errors.Add("Selected is complete - new characters cannot be added");
-            }
-            else
-            {
-                // valid campaign
-            }
-        }
-        else
-        {
-            errors.Add("Selected campaign does not exist");
-        }
-
-        if (userService.UserExists(userId))
-        {
-            user = userService.FindById(campaignId);
-
-            if (user.Deactivated)
-            {
-                errors.Add("Selected user does not exist");
-            }
-        }
-        else
-        {
-            errors.Add("Selected user does not exist");
-        }
+        var errors = ValidateCampaignAndUser(campaignId, userId);
 
         if (errors.Count > 0)
         {
             return BadRequest(new ResponseWrapper<bool>(errors));
         }
+
+        return Ok(new ResponseWrapper<List<PlayerCharacterDto>>(pcService.GetByCampaignAndUser(campaignId, userId, isDead)));
+    }
+
+    [HttpPut]
+    public IActionResult CreatePlayerCharacter(PlayerCharacterDto pcDto, int campaignId, int userId)
+    {
+        var errors = ValidateCampaignAndUser(campaignId, userId);
+
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ResponseWrapper<bool>(errors));
+        }
+
+        var campaign = campaignService.FindById(campaignId);
+        var user = userService.FindById(campaignId);
 
         var (newPc, newPcId) = pcService.Add(pcDto, campaign!, user!);
         var response = new ResponseWrapper<PlayerCharacterDto>(newPc);
@@ -75,15 +63,26 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         return CreatedAtAction(nameof(GetById), new { id = newPcId }, response);
     }
 
-    [HttpPost("{id}")]
-    public IActionResult UpdatePlayerCharacter(int id, PlayerCharacterDto pcDto)
+    [HttpPost]
+    public IActionResult UpdatePlayerCharacter(PlayerCharacterDto pcDto)
     {
-        if (pcService.PcExists(id))
+        if (pcService.PcExists(pcDto.PlayerCharacterId))
         {
-            return Ok(new ResponseWrapper<PlayerCharacterDto>(pcService.Update(id, pcDto)));
+            return Ok(new ResponseWrapper<PlayerCharacterDto>(pcService.Update(pcDto)));
         }
 
-        return NotFound(new ResponseWrapper<bool>($"No PC with ID {id} found"));
+        return NotFound(new ResponseWrapper<bool>($"No PC with ID {pcDto.PlayerCharacterId} found"));
+    }
+
+    [HttpPost("base")]
+    public IActionResult UpdatePlayerCharacterBase(PlayerCharacterDto pcDto)
+    {
+        if (pcService.PcExists(pcDto.PlayerCharacterId))
+        {
+            return Ok(new ResponseWrapper<PlayerCharacterDto>(pcService.UpdateBase(pcDto)));
+        }
+
+        return NotFound(new ResponseWrapper<bool>($"No PC with ID {pcDto.PlayerCharacterId} found"));
     }
 
     [HttpPost("{id}/stress")]
@@ -144,6 +143,49 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
             return Ok(new ResponseWrapper<PlayerCharacterCombatantDto>(updatedDto));
         }
 
-        return NotFound(new ResponseWrapper<PlayerCharacterCombatantDto>($"No PC with ID {pcDto.PlayerCharacterId} found"));
+        return BadRequest(new ResponseWrapper<PlayerCharacterCombatantDto>($"No PC with ID {pcDto.PlayerCharacterId} found"));
+    }
+
+    private List<string> ValidateCampaignAndUser(int campaignId, int userId)
+    {
+        var errors = new List<string>();
+
+        if (campaignService.CampaignExists(campaignId))
+        {
+            var campaign = campaignService.FindById(campaignId);
+
+            if (campaign.IsDeleted)
+            {
+                errors.Add("Selected campaign does not exist");
+            }
+            else if (campaign.IsFinished)
+            {
+                errors.Add("Selected is complete - new characters cannot be added");
+            }
+            else
+            {
+                // valid campaign
+            }
+        }
+        else
+        {
+            errors.Add("Selected campaign does not exist");
+        }
+
+        if (userService.UserExists(userId))
+        {
+            var user = userService.FindById(userId);
+
+            if (user.Deactivated)
+            {
+                errors.Add("Selected user does not exist");
+            }
+        }
+        else
+        {
+            errors.Add("Selected user does not exist");
+        }
+
+        return errors;
     }
 }

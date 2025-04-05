@@ -1,10 +1,14 @@
+using _5eTools.Data.Entities;
+
 namespace _5eTools.Services.DTOs;
 
 public class PrimalCompanionDto
 {
     public required string Name { get; set; }
 
-    public int HitPointMaximum;
+    public int HitPointMaximum { get; set; }
+
+    public int ArmorClassBonus { get; set; }
 
     public int Damage { get; set; }
 
@@ -30,5 +34,5 @@ public class PrimalCompanionDto
 
     public int? CharismaOverride { get; set; }
 
-    public int PrimalCompanionTypeId { get; set; }
+    public required PrimalCompanionType PrimalCompanionType { get; set; }
 }
