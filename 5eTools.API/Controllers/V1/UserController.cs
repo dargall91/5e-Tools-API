@@ -10,31 +10,31 @@ namespace _5eTools.API.Controllers.V1;
 public class UserController(IUserService userService) : ControllerBase
 {
     [HttpPut]
-    public IActionResult RegisterUser(UserDto user)
+    public IActionResult RegisterUser(LoginRequest user)
     {
         var errors = userService.ValidateNewUser(user);
 
         if (errors.Count > 0)
         {
-            return BadRequest(new ResponseWrapper<int>(errors));
+            return BadRequest(new ResponseWrapper<bool>(errors));
         }
 
-        var id = userService.RegisterUser(user);
+        var newUser = userService.RegisterUser(user);
 
-        return Ok(new ResponseWrapper<int>(id, "Account created", "Info"));
+        return Ok(new ResponseWrapper<UserDto>(newUser, "Account created", "Info"));
     }
 
     [HttpPost("login")]
-    public IActionResult Login(UserDto user)
+    public IActionResult Login(LoginRequest user)
     {
         var loginAttemptResult = userService.AttemptLogin(user);
 
         if (!string.IsNullOrEmpty(loginAttemptResult.Error))
         {
-            return BadRequest(new ResponseWrapper<int>(loginAttemptResult.Error));
+            return BadRequest(new ResponseWrapper<bool>(loginAttemptResult.Error));
         }
 
-        return Ok(new ResponseWrapper<int>(loginAttemptResult.UserId));
+        return Ok(new ResponseWrapper<UserDto>(loginAttemptResult.User));
     }
 
     [HttpPost("deactivate/{id}")]

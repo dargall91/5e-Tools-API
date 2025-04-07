@@ -20,7 +20,7 @@ public interface IUserService
     /// <item>An error describing the failure if the login attempt was unsuccessful<item>
     /// </list>
     /// </returns>
-    LoginAttemptResult AttemptLogin(UserDto user);
+    LoginAttemptResult AttemptLogin(LoginRequest user);
 
     /// <summary>
     /// Validates that a new user's username is unique and their password meets the
@@ -28,7 +28,7 @@ public interface IUserService
     /// </summary>
     /// <param name="user"></param>
     /// <returns></returns>
-    List<string> ValidateNewUser(UserDto user);
+    List<string> ValidateNewUser(LoginRequest user);
 
     /// <summary>
     /// Adds a new <see cref="User"/>. The new User's Username and Password
@@ -37,7 +37,7 @@ public interface IUserService
     /// </summary>
     /// <param name="user">The credentials for the new user</param>
     /// <returns>The ID of the newly created <see cref="User"/></returns>
-    int RegisterUser(UserDto user);
+    UserDto RegisterUser(LoginRequest user);
 
     void UpdateUserPermissions(int id, bool? isAdmin, bool? canHostCampaigns);
 
@@ -50,7 +50,7 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
 
     public User FindById(int id) => dbContext.Users.Find(id)!;
 
-    public LoginAttemptResult AttemptLogin(UserDto loginAttempt)
+    public LoginAttemptResult AttemptLogin(LoginRequest loginAttempt)
     {
         var result = new LoginAttemptResult();
 
@@ -70,14 +70,14 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
             }
             else
             {
-                result.UserId = user.Id;
+                result.User = FindUserDto(user.Id);
             }
         }
 
         return result;
     }
 
-    public int RegisterUser(UserDto user)
+    public UserDto RegisterUser(LoginRequest user)
     {
         var newUser = new User
         {
@@ -94,10 +94,10 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
         dbContext.Add(newUser);
         dbContext.SaveChanges();
 
-        return newUser.Id;
+        return FindUserDto(newUser.Id);
     }
 
-    public List<string> ValidateNewUser(UserDto user)
+    public List<string> ValidateNewUser(LoginRequest user)
     {
         var errors = new List<string>();
 
@@ -136,5 +136,16 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
         //TODO: define password rules
 
         return errors;
+    }
+
+    private UserDto FindUserDto(int id)
+    {
+        return dbContext.Users.Select(x => new UserDto
+        {
+            UserId = x.Id,
+            Username = x.Username,
+            IsAdmin = x.IsAdmin
+        })
+        .Single(x => x.UserId == id);
     }
 }
