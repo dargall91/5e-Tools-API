@@ -146,7 +146,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
                         Id = s.Id,
                         Name = s.Name,
                         ClassName = s.Class.Name,
-                        PrimalCompanion = s.HasPrimalCompanion
+                        PrimalCompanion = s.PrimalCompanion
                     })
                 })
         };

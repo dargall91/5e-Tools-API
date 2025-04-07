@@ -477,7 +477,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                     Id = x.Subclass.Id,
                     Name = x.Subclass.Name,
                     ClassName = x.Subclass.Class.Name,
-                    PrimalCompanion = x.Subclass.HasPrimalCompanion,
+                    PrimalCompanion = x.Subclass.PrimalCompanion,
                     ClassHitDieSize = x.Subclass.Class.HitDieSize,
                     JackOfAllTrades = x.Subclass.Class.Id == Classes.Bard && x.Level > 1
                 },
@@ -537,7 +537,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Select(x => new CharacterClass
             {
                 Subclass = x,
-                PrimalCompanion = x.HasPrimalCompanion
+                PrimalCompanion = x.PrimalCompanion
                     ? new PrimalCompanion
                     {
                         Name = "Primal Companion",

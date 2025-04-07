@@ -11,8 +11,8 @@ using _5eTools.Data;
 namespace _5eTools.Data.Migrations
 {
     [DbContext(typeof(ToolsDbContext))]
-    [Migration("20250405004246_AddPrimalCompanionAcBonusAndRenameSubclassFlag")]
-    partial class AddPrimalCompanionAcBonusAndRenameSubclassFlag
+    [Migration("20250405004246_AddPrimalCompanionAcBonus")]
+    partial class AddPrimalCompanionAcBonus
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1004,7 +1004,7 @@ namespace _5eTools.Data.Migrations
                     b.Property<int>("ClassId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HasPrimalCompanion")
+                    b.Property<bool>("PrimalCompanion")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")

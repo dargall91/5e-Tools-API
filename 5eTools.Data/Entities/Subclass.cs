@@ -11,7 +11,7 @@ public class Subclass
 
     public required string Name { get; set; }
 
-    public bool HasPrimalCompanion { get; set; }
+    public bool PrimalCompanion { get; set; }
 
     public bool ThirdCaster { get; set; }
 

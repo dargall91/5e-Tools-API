@@ -1006,7 +1006,7 @@ namespace _5eTools.Data.Migrations
                     b.Property<int>("ClassId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HasPrimalCompanion")
+                    b.Property<bool>("PrimalCompanion")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
