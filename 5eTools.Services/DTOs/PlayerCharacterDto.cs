@@ -26,13 +26,9 @@ public class PlayerCharacterDto
 
     public bool ToughFeat { get; set; }
 
-    public int ExhaustionLevel { get; set; }
+    public ExhaustionLevel? ExhaustionLevel { get; set; }
 
-    public int SpellcasterLevel { get; set; }
-
-    public int WarlockLevel { get; set; }
-
-    public int ProficiencyBonus { get; set; }
+    public required ProficiencyBonus ProficiencyBonus { get; set; }
 
     public required StrengthDto Strength { get; set; }
 

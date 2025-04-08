@@ -11,7 +11,7 @@ public interface IPlayerCharacterService
     bool PcExists(int id);
     PlayerCharacterDto FindDto(int id);
     List<PlayerCharacterDto> GetByCampaignAndUser(int campaignId, int userId, bool isDead);
-    (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
+    PlayerCharacterDto Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
     PlayerCharacterDto Update(PlayerCharacterDto pcDto);
     PlayerCharacterDto UpdateBase(PlayerCharacterDto pcDto);
     void Kill(int id);
@@ -50,9 +50,12 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 .ThenInclude(x => x.Class)
                 .ThenInclude(x => x.CasterType)
             .Include(x => x.UsedSpellSlots)
-            .Where(x => x.Id == id)
+            .Include(x => x.ProficiencyBonus)
+            .Include(x => x.ExhaustionLevel)
+            .Include(x => x.SpellSlots)
+            .Include(x => x.WarlockSpellSlots)
             .Select(PlayerCharacterToDto)
-            .Single();
+            .Single(x => x.PlayerCharacterId == id);
 
         return pc;
     }
@@ -78,18 +81,23 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.UsedSpellSlots)
             .Include(x => x.Campaign)
             .Include(x => x.User)
+            .Include(x => x.ProficiencyBonus)
+            .Include(x => x.ExhaustionLevel)
+            .Include(x => x.SpellSlots)
+            .Include(x => x.WarlockSpellSlots)
             .Where(x => x.Campaign.Id == campaignId && x.User.Id == userId && x.IsDead == isDead)
             .Select(PlayerCharacterToDto)
             .ToList();
     }
 
-    public (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
+    public PlayerCharacterDto Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
     {
         var newPc = new PlayerCharacter
         {
             Name = pcDto.Name,
             Campaign = campaign,
-            User = user
+            User = user,
+            ProficiencyBonus = dbContext.ProficiencyBonuses.Find(1)!
         };
 
         //create stress/resolve if used by campaign
@@ -117,7 +125,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         dbContext.Add(newPc);
         dbContext.SaveChanges();
 
-        return (FindDto(newPc.Id), newPc.Id);
+        return FindDto(newPc.Id);
     }
 
     public PlayerCharacterDto Update(PlayerCharacterDto pcDto)
@@ -140,6 +148,10 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 .ThenInclude(x => x.CasterType)
             .Include(x => x.UsedSpellSlots)
             .Include(x => x.Campaign)
+            .Include(x => x.ProficiencyBonus)
+            .Include(x => x.ExhaustionLevel)
+            .Include(x => x.SpellSlots)
+            .Include(x => x.WarlockSpellSlots)
             .Single(x => x.Id == pcDto.PlayerCharacterId);
 
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
@@ -158,6 +170,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             toBeUpdated.Stress.StressThreshold = BaseStressThreshold + (CalculateAbilityScoreModifier(pcDto.Resolve!.Score) * StressThresholdModifier);
             toBeUpdated.Stress.StressMaximum = toBeUpdated.Stress.StressThreshold * 2;
         }
+
+        toBeUpdated.ProficiencyBonus = dbContext.ProficiencyBonuses.Find(toBeUpdated.CharacterClasses.Sum(x => x.Level))!;
+        toBeUpdated.ExhaustionLevel = dbContext.ExhaustionLevels.Find(pcDto.ExhaustionLevel?.Id);
 
         dbContext.SaveChanges();
 
@@ -228,9 +243,10 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         pc.Damage = 0;
         pc.TemporaryHitPoints = 0;
 
-        if (pc.ExhaustionLevel != 0)
+        if (pc.ExhaustionLevel != null)
         {
-            pc.ExhaustionLevel -= 1 + extendedRestDuration;
+            var newlevel = pc.ExhaustionLevel.Id - (1 + extendedRestDuration);
+            pc.ExhaustionLevel = newlevel > 1 ? dbContext.ExhaustionLevels.Find(newlevel) : null;
         }
 
         if (pc.UsedSpellSlots != default)
@@ -382,9 +398,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             DeathSaveSuccesses = pc.DeathSaveSuccesses,
             ToughFeat = pc.ToughFeat,
             ExhaustionLevel = pc.ExhaustionLevel,
-            SpellcasterLevel = pc.SpellcasterLevel,
-            WarlockLevel = pc.WarlockLevel,
-            ProficiencyBonus = dbContext.ProficiencyBonuses.Find(pc.CharacterClasses.Sum(x => x.Level))!.Bonus,
+            SpellSlots = pc.SpellSlots,
+            WarlockSpellSlots = pc.WarlockSpellSlots,
+            ProficiencyBonus = pc.ProficiencyBonus,
             Strength = new StrengthDto
             {
                 Score = pc.Strength.Score,
@@ -449,8 +465,6 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                     MeditationDiceUsed = pc.Stress.MeditationDiceUsed,
                     StressStatusId = pc.Stress.StressStatusId
                 },
-            SpellSlots = pc.SpellcasterLevel > 0 ? dbContext.SpellSlots.Find(pc.SpellcasterLevel) : null,
-            WarlockSpellSlots = pc.WarlockLevel > 0 ? dbContext.WarlockSpellSlots.Find(pc.SpellcasterLevel) : null,
             UsedSpellSlots = pc.UsedSpellSlots == default
                 ? null
                 : new UsedSpellSlotsDto
@@ -654,18 +668,16 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         var fullCasterLevels = spellcasterClasses.Where(x => x.Subclass.Class.CasterType.Id == CasterTypes.FullCaster).Sum(x => x.Level);
         var artificerLevels = spellcasterClasses.SingleOrDefault(x => x.Subclass.Class.CasterType.Id == CasterTypes.Artficer)?.Level ?? 0;
 
-        var thirdLevels = CalculateSubclassCasterLevel(thirdCasterLevels, 3.0, isMulticlassedSpellcaster);
-        var halfLevels = CalculateSubclassCasterLevel(halfCasterLevels, 2.0, isMulticlassedSpellcaster);
-        pc.SpellcasterLevel = CalculateSubclassCasterLevel(thirdCasterLevels, 3.0, isMulticlassedSpellcaster)
+        var spellcasterLevel = CalculateSubclassCasterLevel(thirdCasterLevels, 3.0, isMulticlassedSpellcaster)
             + CalculateSubclassCasterLevel(halfCasterLevels, 2.0, isMulticlassedSpellcaster)
             + fullCasterLevels
             //multiclassed artificiers and artificers above level 1 gain spellcaster levels at the same rate as other half casters
             //level one non-multiclassed artificiers are a special exception that gain spell slots at level one
             + (isMulticlassedSpellcaster || artificerLevels != 1 ? CalculateSubclassCasterLevel(artificerLevels, 2.0, isMulticlassedSpellcaster) : 1);
 
-        pc.WarlockLevel = spellcasterClasses.SingleOrDefault(x => x.Subclass.Class.CasterType.Id == CasterTypes.Warlock)?.Level ?? 0;
+        var warlockLevel = spellcasterClasses.SingleOrDefault(x => x.Subclass.Class.CasterType.Id == CasterTypes.Warlock)?.Level ?? 0;
 
-        if (pc.SpellcasterLevel > 0 || pc.WarlockLevel > 0)
+        if (spellcasterLevel > 0 || warlockLevel > 0)
         {
             //create user spell slots if caster levels were just gained, otherwise update
             if (pc.UsedSpellSlots == null)
@@ -677,6 +689,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 dbContext.Entry(pc.UsedSpellSlots).CurrentValues.SetValues(pc.UsedSpellSlots);
             }
         }
+
+        pc.SpellSlots = spellcasterLevel > 0 ? dbContext.SpellSlots.Find(spellcasterLevel) : null;
+        pc.WarlockSpellSlots = spellcasterLevel > 0 ? dbContext.WarlockSpellSlots.Find(warlockLevel) : null;
     }
 
     private static int CalculateAbilityScoreModifier(int score) => (int) Math.Round((score - 10) / 2.0, MidpointRounding.ToNegativeInfinity);

@@ -63,6 +63,11 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
 
             entity.HasOne(x => x.Campaign).WithMany();
             entity.HasOne(x => x.User).WithMany();
+
+            entity.HasOne(x => x.ProficiencyBonus).WithMany().OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.ExhaustionLevel).WithMany();
+            entity.HasOne(x => x.SpellSlots).WithMany();
+            entity.HasOne(x => x.WarlockSpellSlots).WithMany();
         });
 
         modelBuilder.Entity<CharacterClass>(entity =>
