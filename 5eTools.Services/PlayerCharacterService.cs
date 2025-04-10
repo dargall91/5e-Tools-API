@@ -97,7 +97,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             Name = pcDto.Name,
             Campaign = campaign,
             User = user,
-            ProficiencyBonus = dbContext.ProficiencyBonuses.Find(1)!
+            ProficiencyBonus = dbContext.ProficiencyBonuses.Find(pcDto.CharacterClasses.Sum(x => x.Level))!
         };
 
         //create stress/resolve if used by campaign
@@ -105,13 +105,13 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         {
             newPc.Stress = new()
             {
-                StressThreshold = BaseStressThreshold,
+                StressThreshold = BaseStressThreshold + (CalculateAbilityScoreModifier(pcDto.Resolve!.Score) * StressThresholdModifier),
                 StressMaximum = BaseStressThreshold * 2
             };
 
             newPc.Resolve = new()
             {
-                Score = 10
+                Score = pcDto.Resolve!.Score
             };
         }
 
@@ -529,8 +529,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         dbContext.Entry(pc.Wisdom).CurrentValues.SetValues(pcDto.Wisdom);
         dbContext.Entry(pc.Charisma).CurrentValues.SetValues(pcDto.Charisma);
 
-        //pcDto resolve will be null if this is character creation (default values
-        //have already been created and will be used) or campaign does not use stress
+        //pcDto resolve will be null if campaign does not use stress
         if (pcDto.Resolve != default)
         {
             dbContext.Entry(pc.Resolve!).CurrentValues.SetValues(pcDto.Resolve);
@@ -573,15 +572,19 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             var characterClassDto = characterClassDtos.Single(x => x.Subclass.Id == characterClass.Subclass.Id);
             dbContext.Entry(characterClass).CurrentValues.SetValues(characterClassDto);
 
-            //set primal companion
+            //set primal companion, if used by sublcass
             if (characterClass.PrimalCompanion != null)
             {
-                var companionDto = characterClassDto.PrimalCompanion!;
-                dbContext.Entry(characterClass.PrimalCompanion).CurrentValues.SetValues(companionDto);
+                //Primal Companion DTO will be null if this is character creation, nothing to do except set max hit points
+                if (characterClassDto.PrimalCompanion != null)
+                {
+                    var companionDto = characterClassDto.PrimalCompanion!;
+                    dbContext.Entry(characterClass.PrimalCompanion).CurrentValues.SetValues(companionDto);
 
-                characterClass.PrimalCompanion.PrimalCompanionType = dbContext.Find<PrimalCompanionType>(companionDto.PrimalCompanionType.Id)!;
+                    characterClass.PrimalCompanion.PrimalCompanionType = dbContext.Find<PrimalCompanionType>(companionDto.PrimalCompanionType.Id)!;
+                }
+
                 characterClass.PrimalCompanion.HitPointMaximum = characterClass.PrimalCompanion.PrimalCompanionType.HitPointMultiplier * (characterClass.Level + 1);
-                companionDto.HitPointMaximum = characterClass.PrimalCompanion.HitPointMaximum;
             }
 
             SetClassSaveDc(pc, characterClass);
@@ -691,7 +694,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         }
 
         pc.SpellSlots = spellcasterLevel > 0 ? dbContext.SpellSlots.Find(spellcasterLevel) : null;
-        pc.WarlockSpellSlots = spellcasterLevel > 0 ? dbContext.WarlockSpellSlots.Find(warlockLevel) : null;
+        pc.WarlockSpellSlots = warlockLevel > 0 ? dbContext.WarlockSpellSlots.Find(warlockLevel) : null;
     }
 
     private static int CalculateAbilityScoreModifier(int score) => (int) Math.Round((score - 10) / 2.0, MidpointRounding.ToNegativeInfinity);
