@@ -31,12 +31,12 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
             return BadRequest(new ResponseWrapper<Monster>("Cannot create a monster without a campaign"));
         }
 
-        if (monsterService.MonsterExistsForCampaign(campaign.Id, name))
+        if (monsterService.MonsterExistsForCampaign(campaign.CampaignId, name))
         {
             return BadRequest(new ResponseWrapper<Monster>($"A monster with the name {name} already exists in campaign {campaign.Name}"));
         }
 
-        var monster = monsterService.AddMonster(name, campaign);
+        var monster = monsterService.AddMonster(name, campaign.CampaignId);
 
         var response = new ResponseWrapper<Monster>(monster);
 
@@ -64,19 +64,19 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
             return NotFound(new ResponseWrapper<Monster>($"No monster with ID {id} found."));
         }
 
-        Campaign? campaign = campaignService.FindActiveCampaign();
+        var campaign = campaignService.FindActiveCampaign();
 
         if (campaign == default)
         {
             return BadRequest(new ResponseWrapper<Monster>("Cannot create a monster without a campaign"));
         }
 
-        if (monsterService.MonsterExistsForCampaign(campaign.Id, name))
+        if (monsterService.MonsterExistsForCampaign(campaign.CampaignId, name))
         {
             return BadRequest(new ResponseWrapper<Monster>($"A monster with the name {name} already exists in campaign {campaign.Name}"));
         }
 
-        var monster = monsterService.CopyMonster(id, name, campaign);
+        var monster = monsterService.CopyMonster(id, name, campaign.CampaignId);
 
         var response = new ResponseWrapper<Monster>(monster);
 

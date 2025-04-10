@@ -10,13 +10,16 @@ public interface IPlayerCharacterService
 {
     bool PcExists(int id);
     PlayerCharacterDto FindDto(int id);
-    (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
-    PlayerCharacterDto Update(int id, PlayerCharacterDto pcDto);
+    List<PlayerCharacterDto> GetByCampaignAndUser(int campaignId, int userId, bool isDead);
+    PlayerCharacterDto Add(PlayerCharacterDto pcDto, Campaign campaign, User user);
+    PlayerCharacterDto Update(PlayerCharacterDto pcDto);
+    PlayerCharacterDto UpdateBase(PlayerCharacterDto pcDto);
     void Kill(int id);
     void Revive(int id);
     StressDto UpdateStress(int pcId, StressDto stressDto);
     PlayerCharacterDto LongRest(int id, int extendedRestDuration);
     PlayerCharacterCombatantDto UpdateCombatantData(PlayerCharacterCombatantDto pcDto);
+    PlayerCharacterMasterData MasterData(int campaignId);
 }
 
 public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacterService
@@ -47,20 +50,54 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 .ThenInclude(x => x.Class)
                 .ThenInclude(x => x.CasterType)
             .Include(x => x.UsedSpellSlots)
-            .Where(x => x.Id == id)
+            .Include(x => x.ProficiencyBonus)
+            .Include(x => x.ExhaustionLevel)
+            .Include(x => x.SpellSlots)
+            .Include(x => x.WarlockSpellSlots)
             .Select(PlayerCharacterToDto)
-            .Single();
+            .Single(x => x.PlayerCharacterId == id);
 
         return pc;
     }
 
-    public (PlayerCharacterDto, int) Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
+    public List<PlayerCharacterDto> GetByCampaignAndUser(int campaignId, int userId, bool isDead)
+    {
+        return dbContext.PlayerCharacters
+            .Include(x => x.Strength)
+            .Include(x => x.Dexterity)
+            .Include(x => x.Constitution)
+            .Include(x => x.Intelligence)
+            .Include(x => x.Wisdom)
+            .Include(x => x.Charisma)
+            .Include(x => x.Resolve)
+            .Include(x => x.Stress)
+            .Include(x => x.CharacterClasses)
+                .ThenInclude(x => x.PrimalCompanion)
+                    .ThenInclude(x => x!.PrimalCompanionType)
+            .Include(x => x.CharacterClasses)
+                .ThenInclude(x => x.Subclass)
+                .ThenInclude(x => x.Class)
+                .ThenInclude(x => x.CasterType)
+            .Include(x => x.UsedSpellSlots)
+            .Include(x => x.Campaign)
+            .Include(x => x.User)
+            .Include(x => x.ProficiencyBonus)
+            .Include(x => x.ExhaustionLevel)
+            .Include(x => x.SpellSlots)
+            .Include(x => x.WarlockSpellSlots)
+            .Where(x => x.Campaign.Id == campaignId && x.User.Id == userId && x.IsDead == isDead)
+            .Select(PlayerCharacterToDto)
+            .ToList();
+    }
+
+    public PlayerCharacterDto Add(PlayerCharacterDto pcDto, Campaign campaign, User user)
     {
         var newPc = new PlayerCharacter
         {
             Name = pcDto.Name,
             Campaign = campaign,
-            User = user
+            User = user,
+            ProficiencyBonus = dbContext.ProficiencyBonuses.Find(pcDto.CharacterClasses.Sum(x => x.Level))!
         };
 
         //create stress/resolve if used by campaign
@@ -68,13 +105,13 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         {
             newPc.Stress = new()
             {
-                StressThreshold = BaseStressThreshold,
+                StressThreshold = BaseStressThreshold + (CalculateAbilityScoreModifier(pcDto.Resolve!.Score) * StressThresholdModifier),
                 StressMaximum = BaseStressThreshold * 2
             };
 
             newPc.Resolve = new()
             {
-                Score = 10
+                Score = pcDto.Resolve!.Score
             };
         }
 
@@ -88,10 +125,10 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         dbContext.Add(newPc);
         dbContext.SaveChanges();
 
-        return (FindDto(newPc.Id), newPc.Id);
+        return FindDto(newPc.Id);
     }
 
-    public PlayerCharacterDto Update(int id, PlayerCharacterDto pcDto)
+    public PlayerCharacterDto Update(PlayerCharacterDto pcDto)
     {
         var toBeUpdated = dbContext.PlayerCharacters
             .Include(x => x.Strength)
@@ -111,7 +148,11 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 .ThenInclude(x => x.CasterType)
             .Include(x => x.UsedSpellSlots)
             .Include(x => x.Campaign)
-            .Single(x => x.Id == id);
+            .Include(x => x.ProficiencyBonus)
+            .Include(x => x.ExhaustionLevel)
+            .Include(x => x.SpellSlots)
+            .Include(x => x.WarlockSpellSlots)
+            .Single(x => x.Id == pcDto.PlayerCharacterId);
 
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
         UpdateAbilityScores(toBeUpdated, pcDto);
@@ -119,9 +160,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         UpdateMaxHitPoints(toBeUpdated);
         UpdateCasterLevels(toBeUpdated);
 
-        if (pcDto.UsedSpellSlotsDto != default)
+        if (pcDto.UsedSpellSlots != default)
         {
-            dbContext.Entry(toBeUpdated.UsedSpellSlots!).CurrentValues.SetValues(pcDto.UsedSpellSlotsDto);
+            dbContext.Entry(toBeUpdated.UsedSpellSlots!).CurrentValues.SetValues(pcDto.UsedSpellSlots);
         }
 
         if (toBeUpdated.Stress != default)
@@ -130,9 +171,22 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             toBeUpdated.Stress.StressMaximum = toBeUpdated.Stress.StressThreshold * 2;
         }
 
+        toBeUpdated.ProficiencyBonus = dbContext.ProficiencyBonuses.Find(toBeUpdated.CharacterClasses.Sum(x => x.Level))!;
+        toBeUpdated.ExhaustionLevel = dbContext.ExhaustionLevels.Find(pcDto.ExhaustionLevel?.Id);
+
         dbContext.SaveChanges();
 
-        return FindDto(id);
+        return FindDto(pcDto.PlayerCharacterId);
+    }
+
+    public PlayerCharacterDto UpdateBase(PlayerCharacterDto pcDto)
+    {
+        var toBeUpdated = dbContext.PlayerCharacters.Find(pcDto.PlayerCharacterId)!;
+
+        dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
+        dbContext.SaveChanges();
+
+        return pcDto;
     }
 
     public void Kill(int id)
@@ -189,9 +243,10 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         pc.Damage = 0;
         pc.TemporaryHitPoints = 0;
 
-        if (pc.ExhaustionLevel != 0)
+        if (pc.ExhaustionLevel != null)
         {
-            pc.ExhaustionLevel -= 1 + extendedRestDuration;
+            var newlevel = pc.ExhaustionLevel.Id - (1 + extendedRestDuration);
+            pc.ExhaustionLevel = newlevel > 1 ? dbContext.ExhaustionLevels.Find(newlevel) : null;
         }
 
         if (pc.UsedSpellSlots != default)
@@ -210,6 +265,11 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         var totalLevels = pc.CharacterClasses.Sum(x => x.Level);
         var hitDiceToRegain = (int) Math.Round(totalLevels / 2.0, MidpointRounding.ToNegativeInfinity);
+        //minimum of one die will be regained
+        if (hitDiceToRegain < 1)
+        {
+            hitDiceToRegain = 1;
+        }
         var totalRegained = 0;
 
         //optimize hit dice regained by prioritizing largest hit dice first
@@ -237,7 +297,11 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 characterClass.PrimalCompanion.Damage = 0;
                 characterClass.PrimalCompanion.TemporaryHitPoints = 0;
                 var companionDiceToRegain = (int) Math.Round(characterClass.Level / 2.0, MidpointRounding.ToNegativeInfinity);
-
+                //minimum of one die will be regained
+                if (companionDiceToRegain < 1)
+                {
+                    companionDiceToRegain = 1;
+                }
                 //if the companion has used less dice than what can be regained, regain them all
                 if (characterClass.PrimalCompanion.HitDiceUsed < companionDiceToRegain)
                 {
@@ -262,7 +326,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 pc.Stress.MeditationDiceUsed -= MeditationDiceRegained;
             }
 
-            //if stress is aboe threshold, it becomes the threshold
+            //if stress is above threshold, it becomes the threshold
             //otherwise lose 50. If currently at 50 or less, lose it all
             if (pc.Stress.StressLevel > pc.Stress.StressThreshold)
             {
@@ -297,10 +361,32 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         return pcDto;
     }
 
+    public PlayerCharacterMasterData MasterData(int campaignId)
+    {
+        return new PlayerCharacterMasterData
+        {
+            StressStatuses = dbContext.StressStatuses
+                .Include(x => x.StressType)
+                .Select(x => new StressStatusDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    MinimumRoll = x.MaximumRoll,
+                    MaximumRoll = x.MaximumRoll,
+                    StressType = x.StressType.Name
+                })
+                .ToList(),
+            ExhaustionLevels = dbContext.ExhaustionLevels.ToList(),
+            PrimalCompanionTypes = dbContext.PrimalCompanionTypes.ToList()
+        };
+    }
+
     private PlayerCharacterDto PlayerCharacterToDto(PlayerCharacter pc)
     {
         return new PlayerCharacterDto
         {
+            PlayerCharacterId = pc.Id,
             Name = pc.Name,
             BaseArmorClass = pc.BaseArmorClass,
             ArmorClassBonus = pc.ArmorClassBonus,
@@ -312,8 +398,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             DeathSaveSuccesses = pc.DeathSaveSuccesses,
             ToughFeat = pc.ToughFeat,
             ExhaustionLevel = pc.ExhaustionLevel,
-            SpellcasterLevel = pc.SpellcasterLevel,
-            WarlockLevel = pc.WarlockLevel,
+            SpellSlots = pc.SpellSlots,
+            WarlockSpellSlots = pc.WarlockSpellSlots,
+            ProficiencyBonus = pc.ProficiencyBonus,
             Strength = new StrengthDto
             {
                 Score = pc.Strength.Score,
@@ -378,7 +465,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                     MeditationDiceUsed = pc.Stress.MeditationDiceUsed,
                     StressStatusId = pc.Stress.StressStatusId
                 },
-            UsedSpellSlotsDto = pc.UsedSpellSlots == default
+            UsedSpellSlots = pc.UsedSpellSlots == default
                 ? null
                 : new UsedSpellSlotsDto
                 {
@@ -399,13 +486,22 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 HitDiceUsed = x.HitDiceUsed,
                 BaseClass = x.BaseClass,
                 ClassSaveDc = x.BaseClassSaveDc,
-                SubclassId = x.Subclass.Id,
-                PrimalCompanionDto = x.PrimalCompanion == default
+                Subclass = new SubclassDto
+                {
+                    Id = x.Subclass.Id,
+                    Name = x.Subclass.Name,
+                    ClassName = x.Subclass.Class.Name,
+                    PrimalCompanion = x.Subclass.PrimalCompanion,
+                    ClassHitDieSize = x.Subclass.Class.HitDieSize,
+                    JackOfAllTrades = x.Subclass.Class.Id == Classes.Bard && x.Level > 1
+                },
+                PrimalCompanion = x.PrimalCompanion == default
                     ? null
                     : new PrimalCompanionDto
                     {
                         Name = x.PrimalCompanion.Name,
                         HitPointMaximum = x.PrimalCompanion.HitPointMaximum,
+                        ArmorClassBonus = x.PrimalCompanion.ArmorClassBonus,
                         Damage = x.PrimalCompanion.Damage,
                         MaxHitPointReduction = x.PrimalCompanion.MaxHitPointReduction,
                         TemporaryHitPoints = x.PrimalCompanion.TemporaryHitPoints,
@@ -418,7 +514,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                         IntelligenceOverride = x.PrimalCompanion.IntelligenceOverride,
                         WisdomOverride = x.PrimalCompanion.WisdomOverride,
                         CharismaOverride = x.PrimalCompanion.CharismaOverride,
-                        PrimalCompanionTypeId = x.PrimalCompanion.PrimalCompanionType.Id
+                        PrimalCompanionType = x.PrimalCompanion.PrimalCompanionType
                     }
             })
         };
@@ -433,8 +529,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         dbContext.Entry(pc.Wisdom).CurrentValues.SetValues(pcDto.Wisdom);
         dbContext.Entry(pc.Charisma).CurrentValues.SetValues(pcDto.Charisma);
 
-        //pcDto resolve will be null if this is character creation (default values
-        //have already been created and will be used) or campaign does not use stress
+        //pcDto resolve will be null if campaign does not use stress
         if (pcDto.Resolve != default)
         {
             dbContext.Entry(pc.Resolve!).CurrentValues.SetValues(pcDto.Resolve);
@@ -445,7 +540,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         var currentSubclassIds = pc.CharacterClasses.Select(x => x.Subclass.Id);
         var newSubclassIds = characterClassDtos
-            .Select(cc => cc.SubclassId)
+            .Select(cc => cc.Subclass.Id)
             .Where(x => !currentSubclassIds.Contains(x));
 
         var newSubclasses = dbContext.Subclasses
@@ -474,18 +569,22 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         foreach (var characterClass in pc.CharacterClasses)
         {
-            var characterClassDto = characterClassDtos.Single(x => x.SubclassId == characterClass.Subclass.Id);
+            var characterClassDto = characterClassDtos.Single(x => x.Subclass.Id == characterClass.Subclass.Id);
             dbContext.Entry(characterClass).CurrentValues.SetValues(characterClassDto);
 
-            //set primal companion
+            //set primal companion, if used by sublcass
             if (characterClass.PrimalCompanion != null)
             {
-                var companionDto = characterClassDto.PrimalCompanionDto!;
-                dbContext.Entry(characterClass.PrimalCompanion).CurrentValues.SetValues(companionDto);
+                //Primal Companion DTO will be null if this is character creation, nothing to do except set max hit points
+                if (characterClassDto.PrimalCompanion != null)
+                {
+                    var companionDto = characterClassDto.PrimalCompanion!;
+                    dbContext.Entry(characterClass.PrimalCompanion).CurrentValues.SetValues(companionDto);
 
-                characterClass.PrimalCompanion.PrimalCompanionType = dbContext.Find<PrimalCompanionType>(companionDto.PrimalCompanionTypeId)!;
+                    characterClass.PrimalCompanion.PrimalCompanionType = dbContext.Find<PrimalCompanionType>(companionDto.PrimalCompanionType.Id)!;
+                }
+
                 characterClass.PrimalCompanion.HitPointMaximum = characterClass.PrimalCompanion.PrimalCompanionType.HitPointMultiplier * (characterClass.Level + 1);
-                companionDto.HitPointMaximum = characterClass.PrimalCompanion.HitPointMaximum;
             }
 
             SetClassSaveDc(pc, characterClass);
@@ -572,18 +671,16 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         var fullCasterLevels = spellcasterClasses.Where(x => x.Subclass.Class.CasterType.Id == CasterTypes.FullCaster).Sum(x => x.Level);
         var artificerLevels = spellcasterClasses.SingleOrDefault(x => x.Subclass.Class.CasterType.Id == CasterTypes.Artficer)?.Level ?? 0;
 
-        var thirdLevels = CalculateSubclassCasterLevel(thirdCasterLevels, 3.0, isMulticlassedSpellcaster);
-        var halfLevels = CalculateSubclassCasterLevel(halfCasterLevels, 2.0, isMulticlassedSpellcaster);
-        pc.SpellcasterLevel = CalculateSubclassCasterLevel(thirdCasterLevels, 3.0, isMulticlassedSpellcaster)
+        var spellcasterLevel = CalculateSubclassCasterLevel(thirdCasterLevels, 3.0, isMulticlassedSpellcaster)
             + CalculateSubclassCasterLevel(halfCasterLevels, 2.0, isMulticlassedSpellcaster)
             + fullCasterLevels
             //multiclassed artificiers and artificers above level 1 gain spellcaster levels at the same rate as other half casters
             //level one non-multiclassed artificiers are a special exception that gain spell slots at level one
             + (isMulticlassedSpellcaster || artificerLevels != 1 ? CalculateSubclassCasterLevel(artificerLevels, 2.0, isMulticlassedSpellcaster) : 1);
 
-        pc.WarlockLevel = spellcasterClasses.SingleOrDefault(x => x.Subclass.Class.CasterType.Id == CasterTypes.Warlock)?.Level ?? 0;
+        var warlockLevel = spellcasterClasses.SingleOrDefault(x => x.Subclass.Class.CasterType.Id == CasterTypes.Warlock)?.Level ?? 0;
 
-        if (pc.SpellcasterLevel > 0 || pc.WarlockLevel > 0)
+        if (spellcasterLevel > 0 || warlockLevel > 0)
         {
             //create user spell slots if caster levels were just gained, otherwise update
             if (pc.UsedSpellSlots == null)
@@ -595,6 +692,9 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 dbContext.Entry(pc.UsedSpellSlots).CurrentValues.SetValues(pc.UsedSpellSlots);
             }
         }
+
+        pc.SpellSlots = spellcasterLevel > 0 ? dbContext.SpellSlots.Find(spellcasterLevel) : null;
+        pc.WarlockSpellSlots = warlockLevel > 0 ? dbContext.WarlockSpellSlots.Find(warlockLevel) : null;
     }
 
     private static int CalculateAbilityScoreModifier(int score) => (int) Math.Round((score - 10) / 2.0, MidpointRounding.ToNegativeInfinity);

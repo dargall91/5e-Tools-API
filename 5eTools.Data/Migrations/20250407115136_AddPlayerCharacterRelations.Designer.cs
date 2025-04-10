@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _5eTools.Data;
 
@@ -10,9 +11,11 @@ using _5eTools.Data;
 namespace _5eTools.Data.Migrations
 {
     [DbContext(typeof(ToolsDbContext))]
-    partial class ToolsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250407115136_AddPlayerCharacterRelations")]
+    partial class AddPlayerCharacterRelations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

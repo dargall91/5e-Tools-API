@@ -6,7 +6,6 @@ public interface ICombatantService
 {
     List<CombatantDto> GetCombatants();
     void SetCombatantList(IEnumerable<CombatantDto> combatants);
-    void ClearCombatants();
 }
 
 public class CombatantService : ICombatantService
@@ -19,10 +18,5 @@ public class CombatantService : ICombatantService
     {
         CombatantList.Clear();
         CombatantList.AddRange(combatants.OrderBy(x => x.Order));
-    }
-
-    public void ClearCombatants()
-    {
-        CombatantList.Clear();
     }
 }

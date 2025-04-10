@@ -13,6 +13,8 @@ public class PrimalCompanion
 
     public int HitPointMaximum { get; set; }
 
+    public int ArmorClassBonus { get; set; }
+
     public int Damage { get; set; }
 
     public int MaxHitPointReduction { get; set; }

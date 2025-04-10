@@ -15,7 +15,9 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
     public DbSet<ExhaustionLevel> ExhaustionLevels { get; set; }
     public DbSet<SpellSlots> SpellSlots { get; set; }
     public DbSet<WarlockSpellSlots> WarlockSpellSlots { get; set; }
+    public DbSet<ProficiencyBonus> ProficiencyBonuses { get; set; }
     public DbSet<StressStatus> StressStatuses { get; set; }
+    public DbSet<PrimalCompanionType> PrimalCompanionTypes { get; set; }
     public DbSet<Encounter> Encounters { get; set; }
     public DbSet<EncounterXpThreshold> EncounterXpThresholds { get; set; }
     public DbSet<Music> Music { get; set; }
@@ -61,6 +63,11 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
 
             entity.HasOne(x => x.Campaign).WithMany();
             entity.HasOne(x => x.User).WithMany();
+
+            entity.HasOne(x => x.ProficiencyBonus).WithMany().OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.ExhaustionLevel).WithMany();
+            entity.HasOne(x => x.SpellSlots).WithMany();
+            entity.HasOne(x => x.WarlockSpellSlots).WithMany();
         });
 
         modelBuilder.Entity<CharacterClass>(entity =>

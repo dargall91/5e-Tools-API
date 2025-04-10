@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _5eTools.Data;
 
@@ -10,9 +11,11 @@ using _5eTools.Data;
 namespace _5eTools.Data.Migrations
 {
     [DbContext(typeof(ToolsDbContext))]
-    partial class ToolsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250404162422_AddProficiencyBonus")]
+    partial class AddProficiencyBonus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,9 +60,6 @@ namespace _5eTools.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("UsesInflatedHitPoints")
                         .HasColumnType("tinyint(1)");
 
@@ -67,8 +67,6 @@ namespace _5eTools.Data.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Campaign");
                 });
@@ -626,7 +624,7 @@ namespace _5eTools.Data.Migrations
                     b.Property<bool>("DwarvenToughness")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int?>("ExhaustionLevelId")
+                    b.Property<int>("ExhaustionLevel")
                         .HasColumnType("int");
 
                     b.Property<int>("HitPointMaximum")
@@ -654,13 +652,10 @@ namespace _5eTools.Data.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("ProficiencyBonusId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("ResolveId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SpellSlotsId")
+                    b.Property<int>("SpellcasterLevel")
                         .HasColumnType("int");
 
                     b.Property<int>("StrengthId")
@@ -681,7 +676,7 @@ namespace _5eTools.Data.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("WarlockSpellSlotsId")
+                    b.Property<int>("WarlockLevel")
                         .HasColumnType("int");
 
                     b.Property<int>("WisdomId")
@@ -700,17 +695,11 @@ namespace _5eTools.Data.Migrations
                     b.HasIndex("DexterityId")
                         .IsUnique();
 
-                    b.HasIndex("ExhaustionLevelId");
-
                     b.HasIndex("IntelligenceId")
                         .IsUnique();
 
-                    b.HasIndex("ProficiencyBonusId");
-
                     b.HasIndex("ResolveId")
                         .IsUnique();
-
-                    b.HasIndex("SpellSlotsId");
 
                     b.HasIndex("StrengthId")
                         .IsUnique();
@@ -723,8 +712,6 @@ namespace _5eTools.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("WarlockSpellSlotsId");
-
                     b.HasIndex("WisdomId")
                         .IsUnique();
 
@@ -735,9 +722,6 @@ namespace _5eTools.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("ArmorClassBonus")
                         .HasColumnType("int");
 
                     b.Property<int?>("CharismaOverride")
@@ -1166,17 +1150,6 @@ namespace _5eTools.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("_5eTools.Data.Entities.Campaign", b =>
-                {
-                    b.HasOne("_5eTools.Data.Entities.User", "CampaignOwner")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CampaignOwner");
-                });
-
             modelBuilder.Entity("_5eTools.Data.Entities.CharacterClass", b =>
                 {
                     b.HasOne("_5eTools.Data.Entities.PlayerCharacter", null)
@@ -1361,29 +1334,15 @@ namespace _5eTools.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("_5eTools.Data.Entities.ExhaustionLevel", "ExhaustionLevel")
-                        .WithMany()
-                        .HasForeignKey("ExhaustionLevelId");
-
                     b.HasOne("_5eTools.Data.Entities.Intelligence", "Intelligence")
                         .WithOne()
                         .HasForeignKey("_5eTools.Data.Entities.PlayerCharacter", "IntelligenceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("_5eTools.Data.Entities.ProficiencyBonus", "ProficiencyBonus")
-                        .WithMany()
-                        .HasForeignKey("ProficiencyBonusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("_5eTools.Data.Entities.Resolve", "Resolve")
                         .WithOne()
                         .HasForeignKey("_5eTools.Data.Entities.PlayerCharacter", "ResolveId");
-
-                    b.HasOne("_5eTools.Data.Entities.SpellSlots", "SpellSlots")
-                        .WithMany()
-                        .HasForeignKey("SpellSlotsId");
 
                     b.HasOne("_5eTools.Data.Entities.Strength", "Strength")
                         .WithOne()
@@ -1405,10 +1364,6 @@ namespace _5eTools.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("_5eTools.Data.Entities.WarlockSpellSlots", "WarlockSpellSlots")
-                        .WithMany()
-                        .HasForeignKey("WarlockSpellSlotsId");
-
                     b.HasOne("_5eTools.Data.Entities.Wisdom", "Wisdom")
                         .WithOne()
                         .HasForeignKey("_5eTools.Data.Entities.PlayerCharacter", "WisdomId")
@@ -1423,15 +1378,9 @@ namespace _5eTools.Data.Migrations
 
                     b.Navigation("Dexterity");
 
-                    b.Navigation("ExhaustionLevel");
-
                     b.Navigation("Intelligence");
 
-                    b.Navigation("ProficiencyBonus");
-
                     b.Navigation("Resolve");
-
-                    b.Navigation("SpellSlots");
 
                     b.Navigation("Strength");
 
@@ -1440,8 +1389,6 @@ namespace _5eTools.Data.Migrations
                     b.Navigation("UsedSpellSlots");
 
                     b.Navigation("User");
-
-                    b.Navigation("WarlockSpellSlots");
 
                     b.Navigation("Wisdom");
                 });

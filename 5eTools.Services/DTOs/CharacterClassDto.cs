@@ -10,7 +10,7 @@ public class CharacterClassDto
 
     public int ClassSaveDc { get; set; }
 
-    public int SubclassId { get; set; }
+    public required SubclassDto Subclass { get; set; }
 
-    public PrimalCompanionDto? PrimalCompanionDto { get; set; }
+    public PrimalCompanionDto? PrimalCompanion { get; set; }
 }

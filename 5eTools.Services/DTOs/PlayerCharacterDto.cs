@@ -1,7 +1,11 @@
+using _5eTools.Data.Entities;
+
 namespace _5eTools.Services.DTOs;
 
 public class PlayerCharacterDto
 {
+    public required int PlayerCharacterId { get; set; }
+
     public required string Name { get; set; }
 
     public int BaseArmorClass { get; set; }
@@ -22,11 +26,9 @@ public class PlayerCharacterDto
 
     public bool ToughFeat { get; set; }
 
-    public int ExhaustionLevel { get; set; }
+    public ExhaustionLevel? ExhaustionLevel { get; set; }
 
-    public int SpellcasterLevel { get; set; }
-
-    public int WarlockLevel { get; set; }
+    public required ProficiencyBonus ProficiencyBonus { get; set; }
 
     public required StrengthDto Strength { get; set; }
 
@@ -44,7 +46,11 @@ public class PlayerCharacterDto
 
     public StressDto? Stress { get; set; }
 
-    public UsedSpellSlotsDto? UsedSpellSlotsDto { get; set; }
+    public SpellSlots? SpellSlots { get; set; }
+
+    public WarlockSpellSlots? WarlockSpellSlots { get; set; }
+
+    public UsedSpellSlotsDto? UsedSpellSlots { get; set; }
 
     public required IEnumerable<CharacterClassDto> CharacterClasses { get; set; }
 }

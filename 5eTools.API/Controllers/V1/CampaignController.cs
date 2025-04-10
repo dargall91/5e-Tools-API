@@ -22,7 +22,7 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     {
         var campaigns = campaignService.FindAll();
 
-        var response = new ResponseWrapper<IEnumerable<Campaign>>(campaigns);
+        var response = new ResponseWrapper<List<CampaignDto>>(campaigns);
 
         return Ok(response);
     }
@@ -39,7 +39,7 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
             return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
-        var response = new ResponseWrapper<Campaign>(campaignService.FindById(id));
+        var response = new ResponseWrapper<CampaignDto>(campaignService.FindDtoById(id));
 
         return Ok(response);
     }
@@ -48,9 +48,9 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     /// Creates a new Campaign
     /// </remarks>
     [HttpPut]
-    public IActionResult AddCampaign(AddEditCampaign campaign)
+    public IActionResult AddCampaign(AddEditCampaign campaign, int userId)
     {
-        var newCampaign = campaignService.AddCampaign(campaign);
+        var newCampaign = campaignService.AddCampaign(campaign, userId);
 
         var response = new ResponseWrapper<Campaign>(newCampaign);
 
@@ -77,12 +77,17 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
     /// Gets the currently active campaign, or null if there are no active campaigns
     /// </remarks>
     [HttpGet("active")]
-    [ProducesResponseType(typeof(ResponseWrapper<Campaign>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResponseWrapper<CampaignDto>), StatusCodes.Status200OK)]
     public IActionResult GetActive()
     {
         var campaign = campaignService.FindActiveCampaign();
 
-        var response = new ResponseWrapper<Campaign>(campaign);
+        if (campaign == default)
+        {
+            return BadRequest(new ResponseWrapper<bool>("No active campaign found!"));
+        }
+
+        var response = new ResponseWrapper<CampaignDto>(campaign);
 
         return Ok(response);
     }
@@ -98,7 +103,7 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
             return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
-        if (campaignService.FindActiveCampaign()?.Id == id)
+        if (campaignService.FindActiveCampaign()?.CampaignId == id)
         {
             return Ok(new ResponseWrapper<object>("Campaign is already active", "Info"));
         }
@@ -119,7 +124,7 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
             return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
-        if (campaignService.FindActiveCampaign()?.Id == id)
+        if (campaignService.FindActiveCampaign()!.CampaignId == id)
         {
             return BadRequest(new ResponseWrapper<object>("The active campaign cannot be deleted"));
         }
@@ -127,18 +132,5 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
         campaignService.DeleteCampaign(id);
 
         return NoContent();
-    }
-
-    [HttpGet("{id}/classes")]
-    public IActionResult GetSubclassOptions(int id)
-    {
-        if (campaignService.CampaignExists(id))
-        {
-            var classOptions = campaignService.FindCampaignClassOptions(id);
-
-            return Ok(new ResponseWrapper<List<ClassListItem>>(classOptions));
-        }
-
-        return NotFound(new ResponseWrapper<Campaign>($"No Campaign with ID {id} found"));
     }
 }

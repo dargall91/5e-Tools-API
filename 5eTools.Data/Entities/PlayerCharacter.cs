@@ -35,15 +35,21 @@ public class PlayerCharacter
 
     public bool DwarvenToughness { get; set; }
 
-    public int SpellcasterLevel { get; set; }
-
-    public int WarlockLevel { get; set; }
-
-    public int ExhaustionLevel { get; set; }
-
     public int InitiativeRoll { get; set; }
 
     public int InitiativeBonus { get; set; }
+
+    [ForeignKey($"{nameof(Entities.SpellSlots)}{nameof(Entities.SpellSlots.Id)}")]
+    public virtual SpellSlots? SpellSlots { get; set; }
+
+    [ForeignKey($"{nameof(Entities.WarlockSpellSlots)}{nameof(Entities.WarlockSpellSlots.Id)}")]
+    public virtual WarlockSpellSlots? WarlockSpellSlots { get; set; }
+
+    [ForeignKey($"{nameof(Entities.ProficiencyBonus)}{nameof(Entities.ProficiencyBonus.Id)}")]
+    public virtual required ProficiencyBonus ProficiencyBonus { get; set; }
+
+    [ForeignKey($"{nameof(Entities.ExhaustionLevel)}{nameof(Entities.ExhaustionLevel.Id)}")]
+    public virtual ExhaustionLevel? ExhaustionLevel { get; set; }
 
     [ForeignKey($"{nameof(Entities.Strength)}{nameof(Entities.Strength.Id)}")]
     public virtual Strength Strength { get; set; } = new();

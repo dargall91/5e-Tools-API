@@ -15,8 +15,8 @@ public interface IMonsterService
     bool MonsterExistsForCampaign(int campaignId, string name);
     Monster FindById(int id);
     Monster UpdateMonster(int id, MonsterDto monsterDto);
-    Monster AddMonster(string name, Campaign campaign);
-    Monster CopyMonster(int id, string name, Campaign campaign);
+    Monster AddMonster(string name, int campaignId);
+    Monster CopyMonster(int id, string name, int campaignId);
     void SetArchived(int id, bool isArchived);
     List<ListItem> GetMonsterListItems(bool archived);
 }
@@ -80,12 +80,12 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         return toBeUpdated;
     }
 
-    public Monster AddMonster(string name, Campaign campaign)
+    public Monster AddMonster(string name, int campaignId)
     {
         var monster = new Monster
         {
             Name = name,
-            Campaign = campaign,
+            Campaign = dbContext.Campaigns.Find(campaignId)!,
             ChallengeRating = dbContext.ChallengeRatings.OrderBy(x => x.Id).First()
         };
 
@@ -95,9 +95,9 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         return monster;
     }
 
-    public Monster CopyMonster(int id, string name, Campaign campaign)
+    public Monster CopyMonster(int id, string name, int campaignId)
     {
-        var newMonster = AddMonster(name, campaign);
+        var newMonster = AddMonster(name, campaignId);
 
         var sourceMonster = dbContext.Monsters
             .Include(x => x.ChallengeRating)
