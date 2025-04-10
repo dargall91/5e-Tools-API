@@ -50,7 +50,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
         var campaign = dbContext.Campaigns
             .Include(x => x.Subclasses)
             .ThenInclude(x => x.Class)
-            .Single();
+            .Single(x => x.Id == id);
 
         return CampaignToDto(campaign);
     }
@@ -60,7 +60,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
         var campaign = dbContext.Campaigns
             .Include(x => x.Subclasses)
             .ThenInclude(x => x.Class)
-            .SingleOrDefault();
+            .SingleOrDefault(x => x.IsActive);
 
         return campaign == default ? null : CampaignToDto(campaign);
     }
@@ -124,7 +124,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
         return dbContext.Campaigns.Find(id)!.IsFinished;
     }
 
-    private CampaignDto CampaignToDto(Campaign campaign)
+    private static CampaignDto CampaignToDto(Campaign campaign)
     {
         return new CampaignDto
         {
@@ -141,7 +141,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
                     Name = x.First().Class.Name,
                     HitDieSize = x.First().Class.HitDieSize,
                     ClassAbilityScore = x.First().Class.ClassAbilityScore,
-                    Subclasses = x.Select(s => new SubclassDto
+                    Subclasses = x.OrderBy(x => x.Name).Select(s => new SubclassDto
                     {
                         Id = s.Id,
                         Name = s.Name,
@@ -149,6 +149,7 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
                         PrimalCompanion = s.PrimalCompanion
                     })
                 })
+                .OrderBy(x => x.Name)
         };
     }
 }

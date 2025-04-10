@@ -124,7 +124,7 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
             return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
         }
 
-        if (campaignService.FindActiveCampaign()?.CampaignId == id)
+        if (campaignService.FindActiveCampaign()!.CampaignId == id)
         {
             return BadRequest(new ResponseWrapper<object>("The active campaign cannot be deleted"));
         }

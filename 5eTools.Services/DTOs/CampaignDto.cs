@@ -10,10 +10,6 @@ public class CampaignDto
 
     public required bool UsesStress { get; set; }
 
-    public bool IsActive { get; set; }
-
-    public bool IsFinished { get; set; }
-
     public bool AllowsMulticlassing { get; set; }
 
     public required IEnumerable<ClassDto> Classes { get; set; }
