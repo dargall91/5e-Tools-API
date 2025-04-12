@@ -9,9 +9,7 @@ public class StressStatus
     [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
-    public int MinimumRoll { get; set; }
-
-    public int MaximumRoll { get; set; }
+    public int Roll { get; set; }
 
     public required string Name { get; set; }
 

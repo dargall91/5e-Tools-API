@@ -17,5 +17,6 @@ public class Stress
 
     public int MeditationDiceUsed { get; set; }
 
-    public int? StressStatusId { get; set; }
+    [ForeignKey($"{nameof(StressStatus)}{nameof(Id)}")]
+    public StressStatus? StressStatus { get; set; }
 }

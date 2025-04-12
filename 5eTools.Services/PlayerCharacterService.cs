@@ -71,6 +71,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.Charisma)
             .Include(x => x.Resolve)
             .Include(x => x.Stress)
+                .ThenInclude(x => x!.StressStatus)
+                .ThenInclude(x => x!.StressType)
             .Include(x => x.CharacterClasses)
                 .ThenInclude(x => x.PrimalCompanion)
                     .ThenInclude(x => x!.PrimalCompanionType)
@@ -139,6 +141,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.Charisma)
             .Include(x => x.Resolve)
             .Include(x => x.Stress)
+                .ThenInclude(x => x!.StressStatus)
+                .ThenInclude(x => x!.StressType)
             .Include(x => x.CharacterClasses)
                 .ThenInclude(x => x.PrimalCompanion)
                     .ThenInclude(x => x!.PrimalCompanionType)
@@ -217,7 +221,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         {
             stress.StressLevel = stressDto.StressLevel;
             stress.MeditationDiceUsed = stressDto.MeditationDiceUsed;
-            stress.StressStatusId = stressDto.StressStatusId;
+            stress.StressStatus = stressDto.StressStatus == null ? null : dbContext.StressStatuses.Find(stressDto.StressStatus.Id);
             //preserve db values of threshold/max since they are not manually set
             stressDto.StressThreshold = stress.StressThreshold;
             stressDto.StressMaximum = stress.StressMaximum;
@@ -365,16 +369,21 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         return new PlayerCharacterMasterData
         {
-            StressStatuses = dbContext.StressStatuses
-                .Include(x => x.StressType)
-                .Select(x => new StressStatusDto
+            StressTypes = dbContext.StressTypes
+                .Include(x => x.StressStatuses)
+                .Select(st => new StressTypeDto
                 {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Description = x.Description,
-                    MinimumRoll = x.MaximumRoll,
-                    MaximumRoll = x.MaximumRoll,
-                    StressType = x.StressType.Name
+                    Name = st.Name,
+                    MinimumRoll = st.MinimumRoll,
+                    MaximumRoll = st.MaximumRoll,
+                    StressStatuses = st.StressStatuses.Select(ss => new StressStatusDto
+                    {
+                        Id = ss.Id,
+                        Name = ss.Name,
+                        Description = ss.Description,
+                        StressType = st.Name,
+                        Roll = ss.Roll
+                    })
                 })
                 .ToList(),
             ExhaustionLevels = dbContext.ExhaustionLevels.ToList(),
@@ -463,7 +472,16 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                     StressThreshold = pc.Stress.StressThreshold,
                     StressMaximum = pc.Stress.StressMaximum,
                     MeditationDiceUsed = pc.Stress.MeditationDiceUsed,
-                    StressStatusId = pc.Stress.StressStatusId
+                    StressStatus = pc.Stress.StressStatus == default
+                        ? null
+                        : new StressStatusDto
+                        {
+                            Id = pc.Stress.StressStatus.Id,
+                            Roll = pc.Stress.StressStatus.Roll,
+                            Name = pc.Stress.StressStatus.Name,
+                            Description = pc.Stress.StressStatus.Description,
+                            StressType = pc.Stress.StressStatus.StressType.Name,
+                        }
                 },
             UsedSpellSlots = pc.UsedSpellSlots == default
                 ? null
