@@ -155,8 +155,9 @@ public class DatabaseSeeding(ToolsDbContext dbContext)
             new() { Id = Classes.Ranger, Name = "Ranger", HitDieSize = 10,  AverageHitDieRoll = 6, ClassAbilityScore = "Wisdom", CasterType = casterTypes.Single(x => x.Id == CasterTypes.HalfCaster) },
             new() { Id = Classes.Rogue, Name = "Rogue", HitDieSize = 8,  AverageHitDieRoll = 5, ClassAbilityScore = "Dexterity", CasterType = casterTypes.Single(x => x.Id == CasterTypes.NonCaster) },
             new() { Id = Classes.Sorcerer, Name = "Sorcerer", HitDieSize = 6,  AverageHitDieRoll = 4, ClassAbilityScore = "Charisma", CasterType = casterTypes.Single(x => x.Id == CasterTypes.FullCaster) },
-            new() { Id = Classes.Wizard, Name = "Wizard", HitDieSize = 6,  AverageHitDieRoll = 4, ClassAbilityScore = "Intelligence", CasterType = casterTypes.Single(x => x.Id == CasterTypes.FullCaster) },
-            new() { Id = Classes.Warlock, Name = "Warlock", HitDieSize = 8,  AverageHitDieRoll = 5, ClassAbilityScore = "Charisma", CasterType = casterTypes.Single(x => x.Id == CasterTypes.Warlock) }
+            new() { Id = Classes.Warlock, Name = "Warlock", HitDieSize = 8,  AverageHitDieRoll = 5, ClassAbilityScore = "Charisma", CasterType = casterTypes.Single(x => x.Id == CasterTypes.Warlock) },
+            new() { Id = Classes.Wizard, Name = "Wizard", HitDieSize = 6,  AverageHitDieRoll = 4, ClassAbilityScore = "Intelligence", CasterType = casterTypes.Single(x => x.Id == CasterTypes.FullCaster) }
+
         };
 
         Seed(classSeeds);
