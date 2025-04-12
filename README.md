@@ -19,3 +19,12 @@ If you get this error: "Unable to load shared library 'runtimes/linux-x64/native
 
 1. Create a new folder `runtimes` in the 5eTools.API project folder.
 2. Copy the neccessary runtime folders from `.nuget/packages/soundflow/runtimes` to the new folder
+
+### Publish to Production Machine
+
+1. `dotnet publish -c Release -o ./publish`
+2. `scp -r ./publish/* username@server:./5e-Tools/5e-Tools-API`
+
+### Run Production Build:
+
+`dotnet 5eTools.API.dll`
