@@ -16,6 +16,7 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
     public DbSet<SpellSlots> SpellSlots { get; set; }
     public DbSet<WarlockSpellSlots> WarlockSpellSlots { get; set; }
     public DbSet<ProficiencyBonus> ProficiencyBonuses { get; set; }
+    public DbSet<StressType> StressTypes { get; set; }
     public DbSet<StressStatus> StressStatuses { get; set; }
     public DbSet<PrimalCompanionType> PrimalCompanionTypes { get; set; }
     public DbSet<Encounter> Encounters { get; set; }
@@ -92,9 +93,14 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
             entity.HasOne(x => x.PrimalCompanionType).WithMany();
         });
 
+        modelBuilder.Entity<Stress>(entity =>
+        {
+            entity.HasOne(x => x.StressStatus).WithMany();
+        });
+
         modelBuilder.Entity<StressStatus>(entity =>
         {
-            entity.HasOne(x => x.StressType).WithMany();
+            entity.HasOne(x => x.StressType).WithMany(x => x.StressStatuses);
         });
 
         modelBuilder.Entity<EncounterMonster>(entity =>

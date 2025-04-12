@@ -10,5 +10,5 @@ public class StressDto
 
     public int MeditationDiceUsed { get; set; }
 
-    public int? StressStatusId { get; set; }
+    public StressStatusDto? StressStatus { get; set; }
 }
