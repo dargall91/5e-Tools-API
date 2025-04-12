@@ -133,4 +133,43 @@ public class CampaignController(ICampaignService campaignService) : ControllerBa
 
         return NoContent();
     }
+
+    [HttpGet("{id}/classes")]
+    public IActionResult Classes(int id)
+    {
+        if (campaignService.CampaignExists(id))
+        {
+            return Ok(new ResponseWrapper<List<ClassDto>>(campaignService.ClassList(id)));
+        }
+
+        return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
+    }
+
+    [HttpPost("{campaignId}/classes/subclass/{subclassId}")]
+    public IActionResult AddExistingSubclass(int campaignId, int subclassId)
+    {
+        if (!campaignService.CampaignExists(campaignId))
+        {
+            return NotFound(new ResponseWrapper<object>($"No campaign with ID {campaignId} found"));
+        }
+
+        //todo: does subclass exist, does class exist
+        campaignService.AddExistingSubclass(campaignId, subclassId);
+
+        return Ok(new ResponseWrapper<List<ClassDto>>(campaignService.ClassList(campaignId)));
+    }
+
+    [HttpPut("{id}/classes/subclass")]
+    public IActionResult AddNewSubclass(int id, NewSubclass newSubclass)
+    {
+        if (!campaignService.CampaignExists(id))
+        {
+            return NotFound(new ResponseWrapper<object>($"No campaign with ID {id} found"));
+        }
+
+        //todo: does subclass exist, does class exist
+        campaignService.AddNewSubclass(id, newSubclass);
+
+        return Ok(new ResponseWrapper<List<ClassDto>>(campaignService.ClassList(id)));
+    }
 }

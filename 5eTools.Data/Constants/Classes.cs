@@ -13,6 +13,6 @@ public static class Classes
     public const int Ranger = 9;
     public const int Rogue = 10;
     public const int Sorcerer = 11;
-    public const int Wizard = 12;
-    public const int Warlock = 13;
+    public const int Warlock = 12;
+    public const int Wizard = 13;
 }
