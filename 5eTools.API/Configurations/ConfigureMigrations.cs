@@ -15,6 +15,9 @@ public static class ConfigureMigrations
             dbContext.Database.Migrate();
         }
 
+        var seeding = new DatabaseSeeding(dbContext);
+        seeding.Seed();
+
         return app;
     }
 }
