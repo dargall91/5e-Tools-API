@@ -11,5 +11,5 @@ public class WarlockSpellSlots
 
     public required int Level { get; set; }
 
-    public int Slots { get; set; }
+    public required int Slots { get; set; }
 }
