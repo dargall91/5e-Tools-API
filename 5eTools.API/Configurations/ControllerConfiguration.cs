@@ -8,13 +8,7 @@ public static class ControllerConfiguration
     public static IServiceCollection AddControllerConfigurations(this IServiceCollection services)
     {
         services
-            .AddCors(options =>
-            {
-                options.AddDefaultPolicy(policy =>
-                {
-                    policy.AllowAnyOrigin();
-                });
-            })
+            .AddCors()
             .AddControllers()
             .AddJsonOptions(options =>
             {

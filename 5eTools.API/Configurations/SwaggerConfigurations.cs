@@ -2,7 +2,6 @@ using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
 
 namespace _5eTools.API.Configurations;
 
@@ -20,23 +19,20 @@ public static class SwaggerConfigurations
 
     public static WebApplication ConfigureSwagger(this WebApplication app)
     {
-        if (!app.Environment.IsProduction())
-        {
-            app
-                .UseSwagger()
-                .UseSwaggerUI(options =>
+        app
+            .UseSwagger()
+            .UseSwaggerUI(options =>
+            {
+                IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+                foreach (var group in provider.ApiVersionDescriptions.Select(x => x.GroupName))
                 {
-                    IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+                    var path = $"{group}/swagger.json";
+                    var name = group.ToUpperInvariant();
 
-                    foreach (var group in provider.ApiVersionDescriptions.Select(x => x.GroupName))
-                    {
-                        var path = $"{group}/swagger.json";
-                        var name = group.ToUpperInvariant();
-
-                        options.SwaggerEndpoint(path, name);
-                    }
-                });
-        }
+                    options.SwaggerEndpoint(path, name);
+                }
+            });
 
         return app;
     }
