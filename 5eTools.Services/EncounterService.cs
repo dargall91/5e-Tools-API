@@ -6,6 +6,7 @@ namespace _5eTools.Services;
 
 public interface IEncounterService
 {
+    List<ListItem> GetEncounterListItems(bool archived, int campaignId);
     bool EncounterIdExists(int id);
     bool EncounterNameExists(string name, int campaignId);
     EncounterDto FindDto(int id);
@@ -13,10 +14,24 @@ public interface IEncounterService
     EncounterDto Update(int id, EncounterDto encounterDto);
     void Archive(int id);
     void Unarchive(int id);
+    List<EncounterXpThreshold> XpThresholds();
 }
 
 public class EncounterService(ToolsDbContext dbContext) : IEncounterService
 {
+    public List<ListItem> GetEncounterListItems(bool archived, int campaignId)
+    {
+        return dbContext.Encounters
+            .Include(x => x.Campaign)
+            .Where(x => x.Campaign.Id == campaignId && x.IsArchived == archived)
+            .Select(x => new ListItem
+            {
+                Id = x.Id,
+                Name = x.Name
+            })
+            .ToList();
+    }
+
     public bool EncounterIdExists(int id) => dbContext.Encounters.Find(id) != default;
 
     public bool EncounterNameExists(string name, int campaignId)
@@ -139,4 +154,6 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
 
         dbContext.SaveChanges();
     }
+
+    public List<EncounterXpThreshold> XpThresholds() => dbContext.EncounterXpThresholds.ToList();
 }
