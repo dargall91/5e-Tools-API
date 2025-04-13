@@ -86,7 +86,13 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         {
             Name = name,
             Campaign = dbContext.Campaigns.Find(campaignId)!,
-            ChallengeRating = dbContext.ChallengeRatings.OrderBy(x => x.Id).First()
+            ChallengeRating = dbContext.ChallengeRatings.OrderBy(x => x.Id).First(),
+            Size = "Medium",
+            Type = "Humanoid",
+            Senses = "Passive perception 10",
+            Languages = "Common",
+            Speed = "30 ft.",
+            Alignment = "Neutral"
         };
 
         dbContext.Add(monster);
