@@ -43,6 +43,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.Charisma)
             .Include(x => x.Resolve)
             .Include(x => x.Stress)
+                .ThenInclude(x => x!.StressStatus)
+                    .ThenInclude(x => x!.StressType)
             .Include(x => x.CharacterClasses)
                 .ThenInclude(x => x.PrimalCompanion)
                     .ThenInclude(x => x!.PrimalCompanionType)
@@ -237,6 +239,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         var pc = dbContext.PlayerCharacters
             .Include(x => x.Stress)
+                .ThenInclude(x => x!.StressStatus)
+                    .ThenInclude(x => x!.StressType)
             .Include(x => x.ExhaustionLevel)
             .Include(x => x.CharacterClasses)
                 .ThenInclude(x => x.PrimalCompanion)
@@ -345,6 +349,14 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             else
             {
                 pc.Stress.StressLevel = 0;
+            }
+
+            //if the character has a virtue, or if they have an affliction and their stress level is now half of their stress threshold or less, they lose it
+            if (pc.Stress.StressStatus != default
+                && (pc.Stress.StressStatus.StressType.Id == StressTypes.Virtue
+                    || pc.Stress.StressLevel <= (pc.Stress.StressThreshold / 2)))
+            {
+                pc.Stress.StressStatus = null;
             }
         }
 
