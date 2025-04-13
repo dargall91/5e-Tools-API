@@ -9,7 +9,7 @@ namespace _5eTools.API.Controllers.V1;
 [ApiController]
 public class UserController(IUserService userService) : ControllerBase
 {
-    [HttpPut]
+    [HttpPut("register")]
     public IActionResult RegisterUser(LoginRequest user)
     {
         var errors = userService.ValidateNewUser(user);
