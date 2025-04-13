@@ -237,6 +237,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         var pc = dbContext.PlayerCharacters
             .Include(x => x.Stress)
+            .Include(x => x.ExhaustionLevel)
             .Include(x => x.CharacterClasses)
                 .ThenInclude(x => x.PrimalCompanion)
             .Include(x => x.CharacterClasses)
