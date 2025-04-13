@@ -676,6 +676,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         {
             newMaximum += totalLevels * 2;
         }
+
+        pc.HitPointMaximum = newMaximum;
     }
 
     private void UpdateCasterLevels(PlayerCharacter pc)
