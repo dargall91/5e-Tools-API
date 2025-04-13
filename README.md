@@ -22,8 +22,8 @@ If you get this error: "Unable to load shared library 'runtimes/linux-x64/native
 
 ### Publish to Production Machine
 
-1. `dotnet publish -c Release -o ./publish`
-2. `scp -r ./publish/* username@server:./5e-Tools/5e-Tools-API`
+1. `dotnet publish -c Release`
+2. `scp -r ./5eTools.API/bin/Release/net8.0/publish/* username@ipAddress:./5e-Tools/5e-Tools-API`
 
 ### Run Production Build:
 
