@@ -2,6 +2,8 @@ namespace _5eTools.Services.DTOs;
 
 public class EncounterDto
 {
+    public required int EncounterId { get; set; }
+
     public required string Name { get; set; }
 
     public bool HasLairAction { get; set; }

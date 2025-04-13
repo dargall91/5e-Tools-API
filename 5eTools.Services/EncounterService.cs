@@ -46,6 +46,7 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
             .Where(x => x.Id == id)
             .Select(x => new EncounterDto
             {
+                EncounterId = x.Id,
                 Name = x.Name,
                 HasLairAction = x.HasLairAction,
                 MusicId = x.Music.Id,

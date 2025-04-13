@@ -57,15 +57,15 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
         return CreatedAtAction(nameof(GetById), new { id = encounterId }, response);
     }
 
-    [HttpPost("{id}")]
-    public IActionResult UpdateEncounter(int id, EncounterDto encounterDto)
+    [HttpPost]
+    public IActionResult UpdateEncounter(EncounterDto encounterDto)
     {
-        if (!encounterService.EncounterIdExists(id))
+        if (!encounterService.EncounterIdExists(encounterDto.EncounterId))
         {
-            return NotFound(new ResponseWrapper<object>($"No encounter with ID {id} found"));
+            return NotFound(new ResponseWrapper<object>($"No encounter with ID {encounterDto.EncounterId} found"));
         }
 
-        return Ok(new ResponseWrapper<EncounterDto>(encounterService.Update(id, encounterDto)));
+        return Ok(new ResponseWrapper<EncounterDto>(encounterService.Update(encounterDto.EncounterId, encounterDto)));
     }
 
     [HttpPost("{id}/archive")]
@@ -99,6 +99,6 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
     {
         var thresholds = encounterService.XpThresholds();
 
-        return Ok(new ResponseWrapper<List<EncounterXpThreshold>(thresholds));
+        return Ok(new ResponseWrapper<List<EncounterXpThreshold>>(thresholds));
     }
 }
