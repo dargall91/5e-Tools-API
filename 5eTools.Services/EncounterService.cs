@@ -10,7 +10,7 @@ public interface IEncounterService
     bool EncounterIdExists(int id);
     bool EncounterNameExists(string name, int campaignId);
     EncounterDto FindDto(int id);
-    (EncounterDto, int) Add(string name, int campaignId);
+    EncounterDto Add(string name, int campaignId);
     EncounterDto Update(int id, EncounterDto encounterDto);
     void Archive(int id);
     void Unarchive(int id);
@@ -29,6 +29,7 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
                 Id = x.Id,
                 Name = x.Name
             })
+            .OrderBy(x => x.Name)
             .ToList();
     }
 
@@ -64,7 +65,7 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
             .Single();
     }
 
-    public (EncounterDto, int) Add(string name, int campaignId)
+    public EncounterDto Add(string name, int campaignId)
     {
         var newEncounter = new Encounter
         {
@@ -76,7 +77,7 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
         dbContext.Add(newEncounter);
         dbContext.SaveChanges();
 
-        return (FindDto(newEncounter.Id), newEncounter.Id);
+        return FindDto(newEncounter.Id);
     }
 
     public EncounterDto Update(int id, EncounterDto encounterDto)
@@ -156,5 +157,5 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
         dbContext.SaveChanges();
     }
 
-    public List<EncounterXpThreshold> XpThresholds() => dbContext.EncounterXpThresholds.ToList();
+    public List<EncounterXpThreshold> XpThresholds() => dbContext.EncounterXpThresholds.OrderBy(x => x.Id).ToList();
 }

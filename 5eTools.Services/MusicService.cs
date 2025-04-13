@@ -97,7 +97,8 @@ public class MusicService(ToolsDbContext dbContext, IConfiguration configuration
 
         var newTracks = Directory.GetFiles(musicFolder)
             .Select(x => Path.GetFileName(x))
-            .Where(x => !trackList.Contains(x));
+            .Where(x => !trackList.Contains(x))
+            .OrderBy(x => x);
 
         return newTracks.ToList();
     }

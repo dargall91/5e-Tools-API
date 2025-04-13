@@ -182,10 +182,12 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
             {
                 Id = x.Id,
                 Name = x.Name,
-            }).ToList();
+            })
+            .OrderBy(x => x.Name)
+            .ToList();
     }
 
-    public List<ChallengeRating> GetChallengeRatings() => dbContext.ChallengeRatings.ToList();
+    public List<ChallengeRating> GetChallengeRatings() => dbContext.ChallengeRatings.OrderBy(x => x.Id).ToList();
 
     private MonsterDto MonsterToDto(Monster monster)
     {

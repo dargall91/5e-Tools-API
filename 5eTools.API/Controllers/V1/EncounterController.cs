@@ -43,7 +43,7 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
 
         if (campaign == default)
         {
-            return BadRequest(new ResponseWrapper<MonsterDto>("Cannot create a monster without a campaign"));
+            return BadRequest(new ResponseWrapper<MonsterDto>("Cannot create an encounter without a campaign"));
         }
 
         if (encounterService.EncounterNameExists(name, campaign.CampaignId))
@@ -51,10 +51,10 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
             return BadRequest(new ResponseWrapper<object>($"An encounter with the name {name} already exists on in campaign {campaign.Name}"));
         }
 
-        var (encounterDto, encounterId) = encounterService.Add(name, campaign.CampaignId);
+        var encounterDto = encounterService.Add(name, campaign.CampaignId);
         var response = new ResponseWrapper<EncounterDto>(encounterDto);
 
-        return CreatedAtAction(nameof(GetById), new { id = encounterId }, response);
+        return CreatedAtAction(nameof(GetById), new { id = encounterDto.EncounterId }, response);
     }
 
     [HttpPost]

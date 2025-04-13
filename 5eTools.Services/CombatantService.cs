@@ -12,7 +12,7 @@ public class CombatantService : ICombatantService
 {
     private static List<CombatantDto> CombatantList { get; } = new List<CombatantDto>();
 
-    public List<CombatantDto> GetCombatants() => CombatantList;
+    public List<CombatantDto> GetCombatants() => CombatantList.OrderBy(x => x.Order).ToList();
 
     public void SetCombatantList(IEnumerable<CombatantDto> combatants)
     {
