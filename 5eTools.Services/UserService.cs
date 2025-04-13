@@ -106,6 +106,10 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
             errors.Add("A user with this username already exists");
         }
 
+        if (user.Username.Contains(' '))
+        {
+            errors.Add("Username cannot contain whitespace");
+        }
 
         errors.AddRange(ValidatePassword(cryptographyService.Decrypt(user.Password, user.Username)));
 
