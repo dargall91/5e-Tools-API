@@ -38,10 +38,16 @@ public class MusicController(IMusicService musicService) : ControllerBase
         return Ok(new ResponseWrapper<bool>(true));
     }
 
-    [HttpGet]
+    [HttpGet("new")]
     public IActionResult GetNewTracks()
     {
         return Ok(new ResponseWrapper<List<string>>(musicService.FindNewMusic()));
+    }
+
+    [HttpGet("all")]
+    public IActionResult GetTrackList()
+    {
+        return Ok(new ResponseWrapper<List<ListItem>>(musicService.FindAll()));
     }
 
     [HttpPut]

@@ -18,6 +18,7 @@ public interface IMusicService
     void Pause();
     void Stop();
     List<string> FindNewMusic();
+    List<ListItem> FindAll();
     int Add(MusicDto musicDto);
 }
 
@@ -128,6 +129,7 @@ public class MusicService(ToolsDbContext dbContext, IConfiguration configuration
             .OrderBy(x => x.Name)
             .ToList();
     }
+
     private void Play(Music music)
     {
         CurrentlyPlaying = music.Name;
