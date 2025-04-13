@@ -133,6 +133,20 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         return NotFound(new ResponseWrapper<bool>($"No PC with ID {id} found"));
     }
 
+    [HttpGet("/combatant")]
+    public IActionResult CombatantData()
+    {
+        var campaign = campaignService.FindActiveCampaign();
+
+        if (campaign == default)
+        {
+            return Ok(new ResponseWrapper<List<PlayerCharacterCombatantDto>>());
+        }
+
+        return Ok(new ResponseWrapper<List<PlayerCharacterCombatantDto>>(pcService.GetCombatantData(campaign.CampaignId)));
+    }
+
+
     [HttpPost("/combatant")]
     public IActionResult UpdateCombatantData(PlayerCharacterCombatantDto pcDto)
     {
