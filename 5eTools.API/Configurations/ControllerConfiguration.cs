@@ -37,6 +37,8 @@ public static class ControllerConfiguration
 
     public static WebApplication ConfigureControllers(this WebApplication app)
     {
+        app.Urls.Add("http://*:5000");
+        app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
         app.UseHttpsRedirection();
         app.MapControllers();
 
