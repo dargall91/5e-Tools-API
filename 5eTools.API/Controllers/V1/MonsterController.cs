@@ -117,4 +117,13 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
 
         return Ok(new ResponseWrapper<List<ListItem>>(monsters));
     }
+
+    [HttpGet("challenge-ratings")]
+    public IActionResult GetChallengeRatings()
+    {
+        var crs = monsterService.GetChallengeRatings();
+
+        return Ok(new ResponseWrapper<List<ChallengeRating>>(crs));
+    }
+
 }

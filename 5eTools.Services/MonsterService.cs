@@ -19,6 +19,7 @@ public interface IMonsterService
     Monster CopyMonster(int id, string name, int campaignId);
     void SetArchived(int id, bool isArchived);
     List<ListItem> GetMonsterListItems(bool archived);
+    List<ChallengeRating> GetChallengeRatings();
 }
 
 public class MonsterService(ToolsDbContext dbContext) : IMonsterService
@@ -176,6 +177,11 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
                 Id = x.Id,
                 Name = x.Name,
             }).ToList();
+    }
+
+    public List<ChallengeRating> GetChallengeRatings()
+    {
+        return dbContext.ChallengeRatings.ToList();
     }
 
     private List<MonsterAbility> UpdateAbilityList(List<MonsterAbility> abilityList, IEnumerable<ActionAbilityDto> updatedAbilityList)
