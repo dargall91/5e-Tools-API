@@ -55,9 +55,9 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         }
 
         var campaign = campaignService.FindById(campaignId);
-        var user = userService.FindById(campaignId);
+        var user = userService.FindById(userId);
 
-        var newPc = pcService.Add(pcDto, campaign!, user!);
+        var newPc = pcService.Add(pcDto, campaign, user);
         var response = new ResponseWrapper<PlayerCharacterDto>(newPc);
 
         return CreatedAtAction(nameof(GetById), new { id = newPc.PlayerCharacterId }, response);

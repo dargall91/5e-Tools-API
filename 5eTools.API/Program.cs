@@ -14,7 +14,6 @@ app
     .ConfigureControllers()
     .ConfigureSwagger()
     .ConfigureExceptions()
-    .MigrateDatabase()
-    .UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    .MigrateDatabase();
 
 await app.RunAsync();
