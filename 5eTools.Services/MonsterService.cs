@@ -10,12 +10,12 @@ public interface IMonsterService
 {
     bool MonsterIdExists(int id);
     bool MonsterExistsForCampaign(int campaignId, string name);
-    Monster FindById(int id);
-    Monster UpdateMonster(int id, MonsterDto monsterDto);
-    Monster AddMonster(string name, int campaignId);
-    Monster CopyMonster(int id, string name, int campaignId);
+    MonsterDto FindDto(int id);
+    MonsterDto UpdateMonster(int id, MonsterDto monsterDto);
+    MonsterDto AddMonster(string name, int campaignId);
+    MonsterDto CopyMonster(int id, string name, int campaignId);
     void SetArchived(int id, bool isArchived);
-    List<ListItem> GetMonsterListItems(bool archived);
+    List<ListItem> GetMonsterListItems(bool archived, int campaignId);
     List<ChallengeRating> GetChallengeRatings();
 }
 
@@ -26,9 +26,24 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
     public bool MonsterExistsForCampaign(int campaignId, string name)
         => dbContext.Monsters.Include(x => x.Campaign).Any(x => x.Name == name && x.Campaign.Id == campaignId);
 
-    public Monster FindById(int id) => dbContext.Monsters.Find(id)!;
+    public MonsterDto FindDto(int id)
+    {
+        return dbContext.Monsters
+            .Include(x => x.Strength)
+            .Include(x => x.Dexterity)
+            .Include(x => x.Constitution)
+            .Include(x => x.Intelligence)
+            .Include(x => x.Wisdom)
+            .Include(x => x.Charisma)
+            .Include(x => x.ChallengeRating)
+            .Include(x => x.Abilities)
+            .Include(x => x.Actions)
+            .Include(x => x.LegendaryActions)
+            .Select(MonsterToDto)
+            .Single(x => x.MonsterId == id);
+    }
 
-    public Monster UpdateMonster(int id, MonsterDto monsterDto)
+    public MonsterDto UpdateMonster(int id, MonsterDto monsterDto)
     {
         var toBeUpdated = dbContext.Monsters
             .Include(x => x.Strength)
@@ -37,6 +52,7 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
             .Include(x => x.Intelligence)
             .Include(x => x.Wisdom)
             .Include(x => x.Charisma)
+            .Include(x => x.ChallengeRating)
             .Include(x => x.Abilities)
             .Include(x => x.Actions)
             .Include(x => x.LegendaryActions)
@@ -46,7 +62,7 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(monsterDto);
 
         //update CR
-        toBeUpdated.ChallengeRating = dbContext.ChallengeRatings.Find(monsterDto.ChallengeRatingId)!;
+        toBeUpdated.ChallengeRating = dbContext.ChallengeRatings.Find(monsterDto.ChallengeRating.Id)!;
 
         //ability scores
         dbContext.Entry(toBeUpdated.Strength).CurrentValues.SetValues(monsterDto.Strength);
@@ -63,10 +79,10 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
 
         dbContext.SaveChanges();
 
-        return toBeUpdated;
+        return MonsterToDto(toBeUpdated);
     }
 
-    public Monster AddMonster(string name, int campaignId)
+    public MonsterDto AddMonster(string name, int campaignId)
     {
         var monster = new Monster
         {
@@ -84,13 +100,11 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         dbContext.Add(monster);
         dbContext.SaveChanges();
 
-        return monster;
+        return MonsterToDto(monster);
     }
 
-    public Monster CopyMonster(int id, string name, int campaignId)
+    public MonsterDto CopyMonster(int id, string name, int campaignId)
     {
-        var newMonster = AddMonster(name, campaignId);
-
         var sourceMonster = dbContext.Monsters
             .Include(x => x.ChallengeRating)
             .Include(x => x.Strength)
@@ -104,13 +118,20 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
             .Include(x => x.LegendaryActions)
             .Single(x => x.Id == id);
 
+        var newMonster = new Monster
+        {
+            Name = name,
+            Campaign = dbContext.Campaigns.Find(campaignId)!,
+            ChallengeRating = dbContext.ChallengeRatings.Find(sourceMonster.ChallengeRating!.Id)!,
+        };
+        dbContext.Add(newMonster);
+        //save to generate an ID
+        dbContext.SaveChanges();
+
         CopyEntityExceptId(newMonster, sourceMonster);
 
         //Name is copied by CopyEntityExceptId, so need to manually set it back it to the new value
         newMonster.Name = name;
-
-        //copy CR
-        newMonster.ChallengeRating = dbContext.ChallengeRatings.Find(sourceMonster.ChallengeRating!.Id)!;
 
         //copy ability scores
         CopyEntityExceptId(newMonster.Strength, sourceMonster.Strength);
@@ -142,18 +163,18 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
 
         dbContext.SaveChanges();
 
-        return newMonster;
+        return MonsterToDto(newMonster);
     }
 
     public void SetArchived(int id, bool isArchived)
     {
-        var monster = FindById(id);
+        var monster = dbContext.Monsters.Find(id)!;
         monster.IsArchived = isArchived;
 
         dbContext.SaveChanges();
     }
 
-    public List<ListItem> GetMonsterListItems(bool archived)
+    public List<ListItem> GetMonsterListItems(bool archived, int campaignId)
     {
         return dbContext.Monsters
             .Where(x => x.IsArchived == archived)
@@ -164,9 +185,91 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
             }).ToList();
     }
 
-    public List<ChallengeRating> GetChallengeRatings()
+    public List<ChallengeRating> GetChallengeRatings() => dbContext.ChallengeRatings.ToList();
+
+    private MonsterDto MonsterToDto(Monster monster)
     {
-        return dbContext.ChallengeRatings.ToList();
+        return new MonsterDto
+        {
+            MonsterId = monster.Id,
+            Name = monster.Name,
+            DisplayName = monster.Name,
+            Size = monster.Size,
+            Type = monster.Type,
+            Alignment = monster.Alignment,
+            ArmorClass = monster.ArmorClass,
+            HitPoints = monster.HitPoints,
+            Speed = monster.Speed,
+            Senses = monster.Senses,
+            Languages = monster.Languages,
+            BonusInitiative = monster.BonusInitiative,
+            LegendaryActionCount = monster.LegendaryActionCount,
+            Strength = new StrengthDto
+            {
+                Score = monster.Strength.Score,
+                Proficient = monster.Strength.Proficient,
+                Athletics = monster.Strength.Athletics
+            },
+            Dexterity = new DexterityDto
+            {
+                Score = monster.Dexterity.Score,
+                Proficient = monster.Dexterity.Proficient,
+                Acrobatics = monster.Dexterity.Acrobatics,
+                SleightOfHand = monster.Dexterity.SleightOfHand,
+                Stealth = monster.Dexterity.Stealth
+            },
+            Constitution = new ConstitutionDto
+            {
+                Score = monster.Constitution.Score,
+                Proficient = monster.Constitution.Proficient
+            },
+            Intelligence = new IntelligenceDto
+            {
+                Score = monster.Intelligence.Score,
+                Proficient = monster.Intelligence.Proficient,
+                Arcana = monster.Intelligence.Arcana,
+                History = monster.Intelligence.History,
+                Investigation = monster.Intelligence.Investigation,
+                Nature = monster.Intelligence.Nature,
+                Religion = monster.Intelligence.Religion
+            },
+            Wisdom = new WisdomDto
+            {
+                Score = monster.Wisdom.Score,
+                Proficient = monster.Wisdom.Proficient,
+                AnimalHandling = monster.Wisdom.AnimalHandling,
+                Insight = monster.Wisdom.Insight,
+                Medicine = monster.Wisdom.Medicine,
+                Perception = monster.Wisdom.Perception,
+                Survival = monster.Wisdom.Survival
+            },
+            Charisma = new CharismaDto
+            {
+                Score = monster.Charisma.Score,
+                Proficient = monster.Charisma.Proficient,
+                Deception = monster.Charisma.Deception,
+                Intimidation = monster.Charisma.Intimidation,
+                Performance = monster.Charisma.Performance,
+                Persuasion = monster.Charisma.Persuasion
+            },
+            ChallengeRating = monster.ChallengeRating,
+            Abilities = monster.Abilities.Select(a => new ActionAbilityDto
+            {
+                Name = a.Name,
+                Description = a.Description
+            }),
+            Actions = monster.Actions.Select(a => new ActionAbilityDto
+            {
+                Name = a.Name,
+                Description = a.Description
+            }),
+            LegendaryActions = monster.LegendaryActions.Select(la => new LegendaryActionDto
+            {
+                Name = la.Name,
+                Description = la.Description,
+                Cost = la.Cost
+            })
+        };
     }
 
     private List<MonsterAbility> UpdateAbilityList(List<MonsterAbility> abilityList, IEnumerable<ActionAbilityDto> updatedAbilityList)
