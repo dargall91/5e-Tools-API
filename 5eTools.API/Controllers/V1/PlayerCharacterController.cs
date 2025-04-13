@@ -146,7 +146,6 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         return Ok(new ResponseWrapper<List<PlayerCharacterCombatantDto>>(pcService.GetCombatantData(campaign.CampaignId)));
     }
 
-
     [HttpPost("/combatant")]
     public IActionResult UpdateCombatantData(PlayerCharacterCombatantDto pcDto)
     {

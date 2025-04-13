@@ -9,9 +9,6 @@ namespace _5eTools.Services;
 public interface IMonsterService
 {
     bool MonsterIdExists(int id);
-    bool AbilityExistsOnMonster(int monsterId, int abilityId);
-    bool ActionExistsOnMonster(int monsterId, int actionId);
-    bool LegendaryActionExistsOnMonster(int monsterId, int legendaryActionId);
     bool MonsterExistsForCampaign(int campaignId, string name);
     Monster FindById(int id);
     Monster UpdateMonster(int id, MonsterDto monsterDto);
@@ -25,18 +22,6 @@ public interface IMonsterService
 public class MonsterService(ToolsDbContext dbContext) : IMonsterService
 {
     public bool MonsterIdExists(int id) => dbContext.Monsters.Find(id) != default;
-
-    public bool AbilityExistsOnMonster(int monsterId, int abilityId)
-        => dbContext.Monsters.Any(x => x.Id == monsterId && x.Abilities.Any(x => x.Id == abilityId));
-
-    public bool ActionExistsOnMonster(int monsterId, int actionId)
-        => dbContext.Monsters.Any(x => x.Id == monsterId && x.Actions.Any(x => x.Id == actionId));
-
-    public bool LegendaryActionExistsOnMonster(int monsterId, int legendaryActionId)
-        => dbContext.Monsters.Any(x => x.Id == monsterId && x.LegendaryActions.Any(x => x.Id == legendaryActionId));
-
-    public bool EntityIdExists<TEntity>(int id) where TEntity : class
-    => dbContext.Find<TEntity>(id) != default;
 
     public bool MonsterExistsForCampaign(int campaignId, string name)
         => dbContext.Monsters.Include(x => x.Campaign).Any(x => x.Name == name && x.Campaign.Id == campaignId);
