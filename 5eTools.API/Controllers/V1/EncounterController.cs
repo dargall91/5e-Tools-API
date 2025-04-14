@@ -65,7 +65,7 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
             return NotFound(new ResponseWrapper<object>($"No encounter with ID {encounterDto.EncounterId} found"));
         }
 
-        return Ok(new ResponseWrapper<EncounterDto>(encounterService.Update(encounterDto.EncounterId, encounterDto)));
+        return Ok(new ResponseWrapper<EncounterDto>(encounterService.Update(encounterDto)));
     }
 
     [HttpPost("{id}/archive")]

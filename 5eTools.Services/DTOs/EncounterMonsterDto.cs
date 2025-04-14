@@ -15,4 +15,16 @@ public class EncounterMonsterDto
     public required bool IsReinforcement { get; set; }
 
     public required bool IsMinion { get; set; }
+
+    public int Xp;
+
+    public string? DisplayName { get; set; }
+
+    public int Dexterity { get; set; }
+
+    public int InitiativeBonus { get; set; }
+
+    public int ArmorClass { get; set; }
+
+    public int HitPoints { get; set; }
 }

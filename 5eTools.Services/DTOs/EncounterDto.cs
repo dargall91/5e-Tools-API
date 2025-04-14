@@ -10,5 +10,5 @@ public class EncounterDto
 
     public int MusicId { get; set; }
 
-    public IEnumerable<EncounterMonsterDto> EncounterMonsterDtos { get; set; } = new List<EncounterMonsterDto>();
+    public IEnumerable<EncounterMonsterDto> EncounterMonsters { get; set; } = new List<EncounterMonsterDto>();
 }

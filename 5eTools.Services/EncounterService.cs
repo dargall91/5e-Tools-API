@@ -11,7 +11,7 @@ public interface IEncounterService
     bool EncounterNameExists(string name, int campaignId);
     EncounterDto FindDto(int id);
     EncounterDto Add(string name, int campaignId);
-    EncounterDto Update(int id, EncounterDto encounterDto);
+    EncounterDto Update(EncounterDto encounterDto);
     void Archive(int id);
     void Unarchive(int id);
     List<EncounterXpThreshold> XpThresholds();
@@ -43,26 +43,35 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
         return dbContext.Encounters
             .Include(x => x.Music)
             .Include(x => x.EncounterMonsters)
-            .ThenInclude(x => x.Monster)
-            .Where(x => x.Id == id)
-            .Select(x => new EncounterDto
+                .ThenInclude(x => x.Monster)
+                    .ThenInclude(x => x.Dexterity)
+            .Include(x => x.EncounterMonsters)
+                .ThenInclude(x => x.Monster)
+                    .ThenInclude(x => x.ChallengeRating)
+            .Select(e => new EncounterDto
             {
-                EncounterId = x.Id,
-                Name = x.Name,
-                HasLairAction = x.HasLairAction,
-                MusicId = x.Music.Id,
-                EncounterMonsterDtos = x.EncounterMonsters.Select(y => new EncounterMonsterDto
+                EncounterId = e.Id,
+                Name = e.Name,
+                HasLairAction = e.HasLairAction,
+                MusicId = e.Music.Id,
+                EncounterMonsters = e.EncounterMonsters.Select(em => new EncounterMonsterDto
                 {
-                    MonsterId = y.Monster.Id,
-                    Name = y.Monster.Name,
-                    Quantity = y.Quantity,
-                    InitiativeRoll = y.InitiativeRoll,
-                    IsInvisible = y.IsInvisible,
-                    IsReinforcement = y.IsReinforcement,
-                    IsMinion = y.IsMinion
+                    MonsterId = em.Monster.Id,
+                    Name = em.Monster.Name,
+                    Quantity = em.Quantity,
+                    InitiativeRoll = em.InitiativeRoll,
+                    IsInvisible = em.IsInvisible,
+                    IsReinforcement = em.IsReinforcement,
+                    IsMinion = em.IsMinion,
+                    Xp = em.Monster.ChallengeRating.XP,
+                    DisplayName = em.Monster.DisplayName,
+                    Dexterity = em.Monster.Dexterity.Score,
+                    InitiativeBonus = em.Monster.BonusInitiative,
+                    ArmorClass = em.Monster.ArmorClass,
+                    HitPoints = em.Monster.HitPoints
                 })
             })
-            .Single();
+            .Single(x => x.EncounterId == id);
     }
 
     public EncounterDto Add(string name, int campaignId)
@@ -80,17 +89,17 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
         return FindDto(newEncounter.Id);
     }
 
-    public EncounterDto Update(int id, EncounterDto encounterDto)
+    public EncounterDto Update(EncounterDto encounterDto)
     {
         var encounter = dbContext.Encounters
             .Include(x => x.EncounterMonsters)
-            .ThenInclude(x => x.Monster)
-            .Single(x => x.Id == id);
+                .ThenInclude(x => x.Monster)
+            .Single(x => x.Id == encounterDto.EncounterId);
 
         dbContext.Entry(encounter).CurrentValues.SetValues(encounterDto);
 
         var encounterMonsters = encounter.EncounterMonsters.GroupBy(x => x.Monster.Id);
-        var encounterMonsterDtos = encounterDto.EncounterMonsterDtos.GroupBy(x => x.MonsterId);
+        var encounterMonsterDtos = encounterDto.EncounterMonsters.GroupBy(x => x.MonsterId);
 
         foreach (var encounterMonsterDto in encounterMonsterDtos)
         {
@@ -138,7 +147,7 @@ public class EncounterService(ToolsDbContext dbContext) : IEncounterService
 
         dbContext.SaveChanges();
 
-        return FindDto(id);
+        return FindDto(encounterDto.EncounterId);
     }
 
     public void Archive(int id)
