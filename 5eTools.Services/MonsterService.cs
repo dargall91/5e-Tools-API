@@ -11,7 +11,7 @@ public interface IMonsterService
     bool MonsterIdExists(int id);
     bool MonsterExistsForCampaign(int campaignId, string name);
     MonsterDto FindDto(int id);
-    MonsterDto UpdateMonster(int id, MonsterDto monsterDto);
+    MonsterDto UpdateMonster(MonsterDto monsterDto);
     MonsterDto AddMonster(string name, int campaignId);
     MonsterDto CopyMonster(int id, string name, int campaignId);
     void SetArchived(int id, bool isArchived);
@@ -43,7 +43,7 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
             .Single(x => x.MonsterId == id);
     }
 
-    public MonsterDto UpdateMonster(int id, MonsterDto monsterDto)
+    public MonsterDto UpdateMonster(MonsterDto monsterDto)
     {
         var toBeUpdated = dbContext.Monsters
             .Include(x => x.Strength)
@@ -56,7 +56,7 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
             .Include(x => x.Abilities)
             .Include(x => x.Actions)
             .Include(x => x.LegendaryActions)
-            .Single(x => x.Id == id);
+            .Single(x => x.Id == monsterDto.MonsterId);
 
         //update non-navigation properties
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(monsterDto);

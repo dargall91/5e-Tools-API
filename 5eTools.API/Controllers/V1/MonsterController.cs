@@ -43,17 +43,17 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
         return CreatedAtAction(nameof(GetById), new { id = monster.MonsterId }, response);
     }
 
-    [HttpPost("{id}")]
-    public IActionResult UpdateMonster(int id, MonsterDto monsterDto)
+    [HttpPost]
+    public IActionResult UpdateMonster(MonsterDto monsterDto)
     {
-        if (monsterService.MonsterIdExists(id))
+        if (monsterService.MonsterIdExists(monsterDto.MonsterId))
         {
-            var monster = monsterService.UpdateMonster(id, monsterDto);
+            var monster = monsterService.UpdateMonster(monsterDto);
 
             return Ok(new ResponseWrapper<MonsterDto>(monster));
         }
 
-        return BadRequest(new ResponseWrapper<MonsterDto>($"Invalid Monster ID: {id}"));
+        return BadRequest(new ResponseWrapper<MonsterDto>($"Invalid Monster ID: {monsterDto.MonsterId}"));
     }
 
     [HttpPut("{id}/copy")]
