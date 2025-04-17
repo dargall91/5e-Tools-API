@@ -195,7 +195,7 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
         {
             MonsterId = monster.Id,
             Name = monster.Name,
-            DisplayName = monster.Name,
+            DisplayName = monster.DisplayName,
             Size = monster.Size,
             Type = monster.Type,
             Alignment = monster.Alignment,
