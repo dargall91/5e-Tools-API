@@ -92,6 +92,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.WarlockSpellSlots)
             .Where(x => x.Campaign.Id == campaignId && x.User.Id == userId && x.IsDead == isDead)
             .Select(PlayerCharacterToDto)
+            .OrderBy(x => x.Name)
             .ToList();
     }
 
@@ -145,7 +146,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.Resolve)
             .Include(x => x.Stress)
                 .ThenInclude(x => x!.StressStatus)
-                .ThenInclude(x => x!.StressType)
+                    .ThenInclude(x => x!.StressType)
             .Include(x => x.CharacterClasses)
                 .ThenInclude(x => x.PrimalCompanion)
                     .ThenInclude(x => x!.PrimalCompanionType)
@@ -183,7 +184,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         dbContext.SaveChanges();
 
-        return FindDto(pcDto.PlayerCharacterId);
+        return PlayerCharacterToDto(toBeUpdated);
     }
 
     public PlayerCharacterDto UpdateBase(PlayerCharacterDto pcDto)
@@ -369,7 +370,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         return dbContext.PlayerCharacters
             .Include(x => x.Campaign)
-            .Where(x => !x.IsDead)
+            .Where(x => !x.IsDead && x.Campaign.Id == campaignId)
             .Select(x => new PlayerCharacterCombatantDto
             {
                 PlayerCharacterId = x.Id,
@@ -379,6 +380,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 InitiativeRoll = x.InitiativeRoll,
                 InitiativeBonus = x.InitiativeBonus
             })
+            .OrderBy(x => x.PlayerCharacterName)
             .ToList();
     }
 

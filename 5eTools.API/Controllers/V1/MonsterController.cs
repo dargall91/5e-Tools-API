@@ -15,10 +15,10 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
     {
         if (monsterService.MonsterIdExists(id))
         {
-            return Ok(new ResponseWrapper<Monster>(monsterService.FindById(id)));
+            return Ok(new ResponseWrapper<MonsterDto>(monsterService.FindDto(id)));
         }
 
-        return NotFound(new ResponseWrapper<Monster>($"No monster with ID {id} found."));
+        return NotFound(new ResponseWrapper<MonsterDto>($"No monster with ID {id} found."));
     }
 
     [HttpPut]
@@ -28,32 +28,32 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
 
         if (campaign == null)
         {
-            return BadRequest(new ResponseWrapper<Monster>("Cannot create a monster without a campaign"));
+            return BadRequest(new ResponseWrapper<MonsterDto>("Cannot create a monster without a campaign"));
         }
 
         if (monsterService.MonsterExistsForCampaign(campaign.CampaignId, name))
         {
-            return BadRequest(new ResponseWrapper<Monster>($"A monster with the name {name} already exists in campaign {campaign.Name}"));
+            return BadRequest(new ResponseWrapper<MonsterDto>($"A monster with the name {name} already exists in campaign {campaign.Name}"));
         }
 
         var monster = monsterService.AddMonster(name, campaign.CampaignId);
 
-        var response = new ResponseWrapper<Monster>(monster);
+        var response = new ResponseWrapper<MonsterDto>(monster);
 
-        return CreatedAtAction(nameof(GetById), new { id = monster.Id }, response);
+        return CreatedAtAction(nameof(GetById), new { id = monster.MonsterId }, response);
     }
 
-    [HttpPost("{id}")]
-    public IActionResult UpdateMonster(int id, MonsterDto monsterDto)
+    [HttpPost]
+    public IActionResult UpdateMonster(MonsterDto monsterDto)
     {
-        if (monsterService.MonsterIdExists(id))
+        if (monsterService.MonsterIdExists(monsterDto.MonsterId))
         {
-            var monster = monsterService.UpdateMonster(id, monsterDto);
+            var monster = monsterService.UpdateMonster(monsterDto);
 
-            return Ok(new ResponseWrapper<Monster>(monster));
+            return Ok(new ResponseWrapper<MonsterDto>(monster));
         }
 
-        return BadRequest(new ResponseWrapper<Monster>($"Invalid Monster ID: {id}"));
+        return BadRequest(new ResponseWrapper<MonsterDto>($"Invalid Monster ID: {monsterDto.MonsterId}"));
     }
 
     [HttpPut("{id}/copy")]
@@ -61,26 +61,26 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
     {
         if (!monsterService.MonsterIdExists(id))
         {
-            return NotFound(new ResponseWrapper<Monster>($"No monster with ID {id} found."));
+            return NotFound(new ResponseWrapper<MonsterDto>($"No monster with ID {id} found."));
         }
 
         var campaign = campaignService.FindActiveCampaign();
 
         if (campaign == default)
         {
-            return BadRequest(new ResponseWrapper<Monster>("Cannot create a monster without a campaign"));
+            return BadRequest(new ResponseWrapper<MonsterDto>("Cannot create a monster without a campaign"));
         }
 
         if (monsterService.MonsterExistsForCampaign(campaign.CampaignId, name))
         {
-            return BadRequest(new ResponseWrapper<Monster>($"A monster with the name {name} already exists in campaign {campaign.Name}"));
+            return BadRequest(new ResponseWrapper<MonsterDto>($"A monster with the name {name} already exists in campaign {campaign.Name}"));
         }
 
         var monster = monsterService.CopyMonster(id, name, campaign.CampaignId);
 
-        var response = new ResponseWrapper<Monster>(monster);
+        var response = new ResponseWrapper<MonsterDto>(monster);
 
-        return CreatedAtAction(nameof(GetById), new { id = monster.Id }, response);
+        return CreatedAtAction(nameof(GetById), new { id = monster.MonsterId }, response);
     }
 
 
@@ -94,7 +94,7 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
             return Ok(new ResponseWrapper<bool>(true));
         }
 
-        return NotFound(new ResponseWrapper<Monster>($"No Monster with ID {id} found"));
+        return NotFound(new ResponseWrapper<MonsterDto>($"No Monster with ID {id} found"));
     }
 
     [HttpPost("{id}/unarchive")]
@@ -107,14 +107,30 @@ public class MonsterController(IMonsterService monsterService, ICampaignService 
             return Ok(new ResponseWrapper<bool>(true));
         }
 
-        return NotFound(new ResponseWrapper<Monster>($"No Monster with ID {id} found"));
+        return NotFound(new ResponseWrapper<MonsterDto>($"No Monster with ID {id} found"));
     }
 
     [HttpGet("all")]
     public IActionResult GetMonsterList(bool archived)
     {
-        var monsters = monsterService.GetMonsterListItems(archived);
+        var campaign = campaignService.FindActiveCampaign();
+
+        if (campaign == default)
+        {
+            return BadRequest(new ResponseWrapper<MonsterDto>("No active campaign found!"));
+        }
+
+        var monsters = monsterService.GetMonsterListItems(archived, campaign.CampaignId);
 
         return Ok(new ResponseWrapper<List<ListItem>>(monsters));
     }
+
+    [HttpGet("challenge-ratings")]
+    public IActionResult GetChallengeRatings()
+    {
+        var crs = monsterService.GetChallengeRatings();
+
+        return Ok(new ResponseWrapper<List<ChallengeRating>>(crs));
+    }
+
 }

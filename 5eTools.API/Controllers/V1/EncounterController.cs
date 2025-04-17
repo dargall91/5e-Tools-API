@@ -1,4 +1,5 @@
 using _5eTools.API.Models;
+using _5eTools.Data.Entities;
 using _5eTools.Services;
 using _5eTools.Services.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,21 @@ namespace _5eTools.API.Controllers.V1;
 [Route("api/v{version:apiversion}/[controller]")]
 public class EncounterController(IEncounterService encounterService, ICampaignService campaignService) : ControllerBase
 {
+    [HttpGet("all")]
+    public IActionResult GetEncounterList(bool archived)
+    {
+        var campaign = campaignService.FindActiveCampaign();
+
+        if (campaign == default)
+        {
+            return BadRequest(new ResponseWrapper<bool>("No active campaign found!"));
+        }
+
+        var encounters = encounterService.GetEncounterListItems(archived, campaign.CampaignId);
+
+        return BadRequest(new ResponseWrapper<List<ListItem>>(encounters));
+    }
+
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
@@ -21,33 +37,35 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
     }
 
     [HttpPut]
-    public IActionResult CreateEncounter(string name, int campaignId)
+    public IActionResult CreateEncounter(string name)
     {
-        if (!campaignService.CampaignExists(campaignId))
+        var campaign = campaignService.FindActiveCampaign();
+
+        if (campaign == default)
         {
-            return BadRequest(new ResponseWrapper<object>($"Invalid campaign ID: {campaignId}"));
+            return BadRequest(new ResponseWrapper<MonsterDto>("Cannot create an encounter without a campaign"));
         }
 
-        if (encounterService.EncounterNameExists(name, campaignId))
+        if (encounterService.EncounterNameExists(name, campaign.CampaignId))
         {
-            return BadRequest(new ResponseWrapper<object>($"An encounter with the name {name} already exists on campaign with ID {campaignId}"));
+            return BadRequest(new ResponseWrapper<object>($"An encounter with the name {name} already exists on in campaign {campaign.Name}"));
         }
 
-        var (encounterDto, encounterId) = encounterService.Add(name, campaignId);
+        var encounterDto = encounterService.Add(name, campaign.CampaignId);
         var response = new ResponseWrapper<EncounterDto>(encounterDto);
 
-        return CreatedAtAction(nameof(GetById), new { id = encounterId }, response);
+        return CreatedAtAction(nameof(GetById), new { id = encounterDto.EncounterId }, response);
     }
 
-    [HttpPost("{id}")]
-    public IActionResult UpdateEncounter(int id, EncounterDto encounterDto)
+    [HttpPost]
+    public IActionResult UpdateEncounter(EncounterDto encounterDto)
     {
-        if (!encounterService.EncounterIdExists(id))
+        if (!encounterService.EncounterIdExists(encounterDto.EncounterId))
         {
-            return NotFound(new ResponseWrapper<object>($"No encounter with ID {id} found"));
+            return NotFound(new ResponseWrapper<object>($"No encounter with ID {encounterDto.EncounterId} found"));
         }
 
-        return Ok(new ResponseWrapper<EncounterDto>(encounterService.Update(id, encounterDto)));
+        return Ok(new ResponseWrapper<EncounterDto>(encounterService.Update(encounterDto)));
     }
 
     [HttpPost("{id}/archive")]
@@ -74,5 +92,13 @@ public class EncounterController(IEncounterService encounterService, ICampaignSe
         encounterService.Unarchive(id);
 
         return Ok(new ResponseWrapper<bool>(true));
+    }
+
+    [HttpGet("xp-thresholds")]
+    public IActionResult GetXpThresholds()
+    {
+        var thresholds = encounterService.XpThresholds();
+
+        return Ok(new ResponseWrapper<List<EncounterXpThreshold>>(thresholds));
     }
 }

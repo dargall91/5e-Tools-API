@@ -8,7 +8,7 @@ public static class ControllerConfiguration
     public static IServiceCollection AddControllerConfigurations(this IServiceCollection services)
     {
         services
-            .AddCors()
+            .AddCors(o => o.AddPolicy("Policy", y => y.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()))
             .AddControllers()
             .AddJsonOptions(options =>
             {
@@ -37,8 +37,7 @@ public static class ControllerConfiguration
 
     public static WebApplication ConfigureControllers(this WebApplication app)
     {
-        app.Urls.Add($"http://*:{(app.Environment.IsProduction() ? "5000" : "7275")}");
-        app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        app.UseCors("Policy");
         app.UseHttpsRedirection();
         app.MapControllers();
 
