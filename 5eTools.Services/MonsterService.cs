@@ -177,7 +177,8 @@ public class MonsterService(ToolsDbContext dbContext) : IMonsterService
     public List<ListItem> GetMonsterListItems(bool archived, int campaignId)
     {
         return dbContext.Monsters
-            .Where(x => x.IsArchived == archived)
+            .Include(x => x.Campaign)
+            .Where(x => x.IsArchived == archived && x.Campaign.Id == campaignId)
             .Select(x => new ListItem
             {
                 Id = x.Id,

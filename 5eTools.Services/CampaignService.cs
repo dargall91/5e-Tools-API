@@ -43,8 +43,8 @@ public class CampaignService(ToolsDbContext dbContext) : ICampaignService
         return dbContext.Campaigns
             .Include(x => x.Subclasses)
             .ThenInclude(x => x.Class)
-            .Select(x => CampaignToDto(x))
             .OrderBy(x => x.Name)
+            .Select(x => CampaignToDto(x))
             .ToList();
     }
 
