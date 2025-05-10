@@ -57,6 +57,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.ExhaustionLevel)
             .Include(x => x.SpellSlots)
             .Include(x => x.WarlockSpellSlots)
+            .Include(x => x.Currency)
             .Select(PlayerCharacterToDto)
             .Single(x => x.PlayerCharacterId == id);
 
@@ -90,6 +91,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.ExhaustionLevel)
             .Include(x => x.SpellSlots)
             .Include(x => x.WarlockSpellSlots)
+            .Include(x => x.Currency)
             .Where(x => x.Campaign.Id == campaignId && x.User.Id == userId && x.IsDead == isDead)
             .Select(PlayerCharacterToDto)
             .OrderBy(x => x.Name)
@@ -160,6 +162,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.ExhaustionLevel)
             .Include(x => x.SpellSlots)
             .Include(x => x.WarlockSpellSlots)
+            .Include(x => x.Currency)
             .Single(x => x.Id == pcDto.PlayerCharacterId);
 
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
@@ -167,6 +170,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         UpdateCharacterClasses(toBeUpdated, pcDto.CharacterClasses);
         UpdateMaxHitPoints(toBeUpdated);
         UpdateCasterLevels(toBeUpdated);
+        dbContext.Entry(toBeUpdated.Currency).CurrentValues.SetValues(pcDto.Currency);
 
         if (pcDto.UsedSpellSlots != default)
         {
@@ -567,7 +571,15 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                         CharismaOverride = x.PrimalCompanion.CharismaOverride,
                         PrimalCompanionType = x.PrimalCompanion.PrimalCompanionType
                     }
-            })
+            }),
+            Currency = new CurrencyDto
+            {
+                Copper = pc.Currency.Copper,
+                Silver = pc.Currency.Silver,
+                Electrum = pc.Currency.Electrum,
+                Gold = pc.Currency.Gold,
+                Platinum = pc.Currency.Platinum
+            }
         };
     }
 

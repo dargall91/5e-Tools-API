@@ -86,4 +86,7 @@ public class PlayerCharacter
 
     [ForeignKey($"{nameof(Entities.User)}{nameof(Entities.User.Id)}")]
     public required virtual User User { get; set; }
+
+    [ForeignKey($"{nameof(Entities.Currency)}{nameof(Entities.Currency.Id)}")]
+    public virtual Currency Currency { get; set; } = new();
 }

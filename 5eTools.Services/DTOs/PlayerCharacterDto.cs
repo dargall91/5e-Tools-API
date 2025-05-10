@@ -53,4 +53,6 @@ public class PlayerCharacterDto
     public UsedSpellSlotsDto? UsedSpellSlots { get; set; }
 
     public required IEnumerable<CharacterClassDto> CharacterClasses { get; set; }
+
+    public required CurrencyDto Currency { get; set; }
 }

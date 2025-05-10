@@ -69,6 +69,8 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
             entity.HasOne(x => x.ExhaustionLevel).WithMany();
             entity.HasOne(x => x.SpellSlots).WithMany();
             entity.HasOne(x => x.WarlockSpellSlots).WithMany();
+
+            entity.HasOne(x => x.Currency).WithOne();
         });
 
         modelBuilder.Entity<CharacterClass>(entity =>
