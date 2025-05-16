@@ -110,5 +110,11 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
             entity.HasOne(x => x.Encounter).WithMany(x => x.EncounterMonsters);
             entity.HasOne(x => x.Monster).WithMany();
         });
+
+        modelBuilder.Entity<InventoryItem>(entity =>
+        {
+            entity.HasOne(x => x.PlayerCharacter).WithMany(x => x.InventoryItems);
+            entity.HasOne(x => x.Item).WithMany();
+        });
     }
 }

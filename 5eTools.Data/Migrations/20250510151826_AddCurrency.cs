@@ -57,7 +57,8 @@ namespace _5eTools.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_PlayerCharacter_CurrencyId",
                 table: "PlayerCharacter",
-                column: "CurrencyId");
+                column: "CurrencyId",
+                unique: true);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_PlayerCharacter_Currency_CurrencyId",

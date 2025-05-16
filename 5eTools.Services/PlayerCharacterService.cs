@@ -58,6 +58,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.SpellSlots)
             .Include(x => x.WarlockSpellSlots)
             .Include(x => x.Currency)
+            .Include(x => x.InventoryItems)
+                .ThenInclude(x => x.Item)
             .Select(PlayerCharacterToDto)
             .Single(x => x.PlayerCharacterId == id);
 
@@ -92,6 +94,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.SpellSlots)
             .Include(x => x.WarlockSpellSlots)
             .Include(x => x.Currency)
+            .Include(x => x.InventoryItems)
+                .ThenInclude(x => x.Item)
             .Where(x => x.Campaign.Id == campaignId && x.User.Id == userId && x.IsDead == isDead)
             .Select(PlayerCharacterToDto)
             .OrderBy(x => x.Name)
@@ -163,6 +167,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             .Include(x => x.SpellSlots)
             .Include(x => x.WarlockSpellSlots)
             .Include(x => x.Currency)
+            .Include(x => x.InventoryItems)
+                .ThenInclude(x => x.Item)
             .Single(x => x.Id == pcDto.PlayerCharacterId);
 
         dbContext.Entry(toBeUpdated).CurrentValues.SetValues(pcDto);
@@ -579,7 +585,13 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
                 Electrum = pc.Currency.Electrum,
                 Gold = pc.Currency.Gold,
                 Platinum = pc.Currency.Platinum
-            }
+            },
+            InventoryItems = pc.InventoryItems.Select(x => new InventoryItemDto
+            {
+                Id = x.Item.Id,
+                Name = x.Item.Name,
+                Quantity = x.Quantity
+            }).OrderBy(x => x.Name)
         };
     }
 

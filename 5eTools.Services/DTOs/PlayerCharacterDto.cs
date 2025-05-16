@@ -55,4 +55,6 @@ public class PlayerCharacterDto
     public required IEnumerable<CharacterClassDto> CharacterClasses { get; set; }
 
     public required CurrencyDto Currency { get; set; }
+
+    public required IEnumerable<InventoryItemDto> InventoryItems { get; set; }
 }

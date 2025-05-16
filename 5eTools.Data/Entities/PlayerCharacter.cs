@@ -89,4 +89,6 @@ public class PlayerCharacter
 
     [ForeignKey($"{nameof(Entities.Currency)}{nameof(Entities.Currency.Id)}")]
     public virtual Currency Currency { get; set; } = new();
+
+    public virtual ICollection<InventoryItem> InventoryItems { get; set; } = new List<InventoryItem>();
 }

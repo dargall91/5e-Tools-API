@@ -19,6 +19,7 @@ public class DatabaseSeeding(ToolsDbContext dbContext)
         SeedStressStatuses();
         SeedChallengeRatings();
         SeedXpThresholds();
+        SeedItems();
 
         dbContext.SaveChanges();
     }
@@ -419,6 +420,57 @@ public class DatabaseSeeding(ToolsDbContext dbContext)
         };
 
         Seed(xpThreholdSeeds);
+    }
+
+    private void SeedItems()
+    {
+        var itemSeeds = new List<Item>
+        {
+            new() { Id = 1, Name = "Potion of Healing" },
+            new() { Id = 2, Name = "Potion of Healing (Greater)" },
+            new() { Id = 3, Name = "Potion of Healing (Superior)" },
+            new() { Id = 4, Name = "Potion of Healing (Supreme)" },
+            new() { Id = 5, Name = "Torch" },
+            new() { Id = 6, Name = "Rope, Hempen (50 feet)" },
+            new() { Id = 7, Name = "Tent" },
+            new() { Id = 8, Name = "Crowbar" },
+            new() { Id = 9, Name = "Hammer" },
+            new() { Id = 10, Name = "Piton" },
+            new() { Id = 11, Name = "Hooded Lantern" },
+            new() { Id = 12, Name = "Tinderbox" },
+            new() { Id = 13, Name = "Waterskin" },
+            new() { Id = 14, Name = "Sheet of Paper" },
+            new() { Id = 15, Name = "Sealing Wax" },
+            new() { Id = 16, Name = "Ball Bearings (x1000)" },
+            new() { Id = 17, Name = "Flask (Oil)" },
+            new() { Id = 18, Name = "Vial of Perfume" },
+            new() { Id = 19, Name = "Soap" },
+            new() { Id = 20, Name = "Common Clothes" },
+            new() { Id = 21, Name = "Fine Clothes" },
+            new() { Id = 22, Name = "Bottle of Ink" },
+            new() { Id = 23, Name = "Ink Pen" },
+            new() { Id = 24, Name = "Lamp" },
+            new() { Id = 25, Name = "Costume" },
+            new() { Id = 26, Name = "Candle" },
+            new() { Id = 27, Name = "Disguise Kit" },
+            new() { Id = 28, Name = "Bedroll" },
+            new() { Id = 29, Name = "Mess Kit" },
+            new() { Id = 30, Name = "Blanket" },
+            new() { Id = 31, Name = "Alms Box" },
+            new() { Id = 32, Name = "Block of Incense" },
+            new() { Id = 33, Name = "Censer" },
+            new() { Id = 34, Name = "Vestment" },
+            new() { Id = 35, Name = "Sheet of Parchment" },
+            new() { Id = 36, Name = "Bad of Sand" },
+            new() { Id = 37, Name = "Small Knife" },
+            new() { Id = 38, Name = "Forgery Kit" },
+            new() { Id = 39, Name = "Herbalism Kit" },
+            new() { Id = 40, Name = "Navigator's Tools" },
+            new() { Id = 41, Name = "Provisioner's Kit" },
+            new() { Id = 42, Name = "Thieves' Tools" }
+        };
+
+        Seed(itemSeeds);
     }
 
     private void Seed<TEntity>(IEnumerable<TEntity> seeds) where TEntity : class
