@@ -231,9 +231,10 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
     {
         var stress = dbContext.PlayerCharacters
             .Include(x => x.Stress)
+                .ThenInclude(x => x!.StressStatus)
             .Where(x => x.Id == pcId)
             .Select(x => x.Stress)
-            .Single();
+            .SingleOrDefault();
 
         if (stress != default)
         {
