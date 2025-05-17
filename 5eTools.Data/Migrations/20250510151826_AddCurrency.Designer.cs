@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _5eTools.Data;
 
@@ -10,9 +11,11 @@ using _5eTools.Data;
 namespace _5eTools.Data.Migrations
 {
     [DbContext(typeof(ToolsDbContext))]
-    partial class ToolsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250510151826_AddCurrency")]
+    partial class AddCurrency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -414,39 +417,6 @@ namespace _5eTools.Data.Migrations
                     b.ToTable("Intelligence");
                 });
 
-            modelBuilder.Entity("_5eTools.Data.Entities.InventoryItem", b =>
-                {
-                    b.Property<int>("PlayerCharacterId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("PlayerCharacterId", "ItemId");
-
-                    b.HasIndex("ItemId");
-
-                    b.ToTable("InventoryItem");
-                });
-
-            modelBuilder.Entity("_5eTools.Data.Entities.Item", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Item");
-                });
-
             modelBuilder.Entity("_5eTools.Data.Entities.LegendaryAction", b =>
                 {
                     b.Property<int>("Id")
@@ -761,8 +731,7 @@ namespace _5eTools.Data.Migrations
                     b.HasIndex("ConstitutionId")
                         .IsUnique();
 
-                    b.HasIndex("CurrencyId")
-                        .IsUnique();
+                    b.HasIndex("CurrencyId");
 
                     b.HasIndex("DexterityId")
                         .IsUnique();
@@ -1319,25 +1288,6 @@ namespace _5eTools.Data.Migrations
                     b.Navigation("Monster");
                 });
 
-            modelBuilder.Entity("_5eTools.Data.Entities.InventoryItem", b =>
-                {
-                    b.HasOne("_5eTools.Data.Entities.Item", "Item")
-                        .WithMany()
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("_5eTools.Data.Entities.PlayerCharacter", "PlayerCharacter")
-                        .WithMany("InventoryItems")
-                        .HasForeignKey("PlayerCharacterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Item");
-
-                    b.Navigation("PlayerCharacter");
-                });
-
             modelBuilder.Entity("_5eTools.Data.Entities.LegendaryAction", b =>
                 {
                     b.HasOne("_5eTools.Data.Entities.Monster", null)
@@ -1447,8 +1397,8 @@ namespace _5eTools.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("_5eTools.Data.Entities.Currency", "Currency")
-                        .WithOne()
-                        .HasForeignKey("_5eTools.Data.Entities.PlayerCharacter", "CurrencyId")
+                        .WithMany()
+                        .HasForeignKey("CurrencyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1609,8 +1559,6 @@ namespace _5eTools.Data.Migrations
             modelBuilder.Entity("_5eTools.Data.Entities.PlayerCharacter", b =>
                 {
                     b.Navigation("CharacterClasses");
-
-                    b.Navigation("InventoryItems");
                 });
 
             modelBuilder.Entity("_5eTools.Data.Entities.StressType", b =>
