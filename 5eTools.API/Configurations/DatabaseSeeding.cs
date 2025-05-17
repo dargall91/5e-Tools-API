@@ -461,7 +461,7 @@ public class DatabaseSeeding(ToolsDbContext dbContext)
             new() { Id = 33, Name = "Censer" },
             new() { Id = 34, Name = "Vestment" },
             new() { Id = 35, Name = "Sheet of Parchment" },
-            new() { Id = 36, Name = "Bad of Sand" },
+            new() { Id = 36, Name = "Bag of Sand" },
             new() { Id = 37, Name = "Small Knife" },
             new() { Id = 38, Name = "Forgery Kit" },
             new() { Id = 39, Name = "Herbalism Kit" },

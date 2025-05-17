@@ -1,4 +1,5 @@
 using _5eTools.API.Models;
+using _5eTools.Data.Entities;
 using _5eTools.Services;
 using _5eTools.Services.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -157,6 +158,27 @@ public class PlayerCharacterController(IPlayerCharacterService pcService, IUserS
         }
 
         return BadRequest(new ResponseWrapper<PlayerCharacterCombatantDto>($"No PC with ID {pcDto.PlayerCharacterId} found"));
+    }
+
+    [HttpGet("items")]
+    public IActionResult GetItemList()
+    {
+        return Ok(new ResponseWrapper<IEnumerable<Item>>(pcService.GetItems()));
+    }
+
+    [HttpPut("items")]
+    public IActionResult AddItem(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return BadRequest(new ResponseWrapper<bool>($"Item name cannot be blank"));
+        }
+
+        var newItem = pcService.AddItem(name);
+
+        return newItem == default
+            ? BadRequest(new ResponseWrapper<bool>($"An item with the name {name} already exists"))
+            : Ok(new ResponseWrapper<Item>(newItem));
     }
 
     private List<string> ValidateCampaignAndUser(int campaignId, int userId)

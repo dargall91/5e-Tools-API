@@ -21,6 +21,8 @@ public interface IPlayerCharacterService
     List<PlayerCharacterCombatantDto> GetCombatantData(int campaignId);
     PlayerCharacterCombatantDto UpdateCombatantData(PlayerCharacterCombatantDto pcDto);
     PlayerCharacterMasterData MasterData(int campaignId);
+    IEnumerable<Item> GetItems();
+    Item? AddItem(string name);
 }
 
 public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacterService
@@ -191,6 +193,8 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
         toBeUpdated.ProficiencyBonus = dbContext.ProficiencyBonuses.Find(toBeUpdated.CharacterClasses.Sum(x => x.Level))!;
         toBeUpdated.ExhaustionLevel = dbContext.ExhaustionLevels.Find(pcDto.ExhaustionLevel?.Id);
+
+        UpdateInventoryItems(toBeUpdated, pcDto.InventoryItems);
 
         dbContext.SaveChanges();
 
@@ -434,6 +438,23 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
         };
     }
 
+    public IEnumerable<Item> GetItems() => dbContext.Items.OrderBy(x => x.Name).ToList().Prepend(new Item { Id = 0, Name = "New Item" });
+
+    public Item? AddItem(string name)
+    {
+        Item? newItem = null;
+
+        if (!dbContext.Items.Any(x => x.Name == name))
+        {
+            newItem = new Item { Name = name };
+
+            dbContext.Add(newItem);
+            dbContext.SaveChanges();
+        }
+
+        return newItem;
+    }
+
     private PlayerCharacterDto PlayerCharacterToDto(PlayerCharacter pc)
     {
         return new PlayerCharacterDto
@@ -588,7 +609,7 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
             },
             InventoryItems = pc.InventoryItems.Select(x => new InventoryItemDto
             {
-                Id = x.Item.Id,
+                ItemId = x.Item.Id,
                 Name = x.Item.Name,
                 Quantity = x.Quantity
             }).OrderBy(x => x.Name)
@@ -778,4 +799,25 @@ public class PlayerCharacterService(ToolsDbContext dbContext) : IPlayerCharacter
 
     private static int CalculateSubclassCasterLevel(int level, double divisor, bool isMulticlassed)
         => (int) Math.Round(level / divisor, isMulticlassed ? MidpointRounding.ToNegativeInfinity : MidpointRounding.ToPositiveInfinity);
+
+    private void UpdateInventoryItems(PlayerCharacter pc, IEnumerable<InventoryItemDto> itemDtos)
+    {
+        //update quanity of all items in both lists
+        foreach (var item in pc.InventoryItems.Where(x => itemDtos.Any(y => y.ItemId == x.Item.Id)))
+        {
+            item.Quantity = itemDtos.Single(x => x.ItemId == item.Item.Id).Quantity;
+        }
+
+        //remove all items not in the dto list
+        foreach (var item in pc.InventoryItems.Where(x => !itemDtos.Any(y => y.ItemId == x.Item.Id)))
+        {
+            dbContext.Remove(item);
+        }
+
+        //add new items from the dto list
+        foreach (var item in itemDtos.Where(x => !pc.InventoryItems.Any(y => y.Item.Id == x.ItemId)))
+        {
+            pc.InventoryItems.Add(new InventoryItem { PlayerCharacter = pc, Item = dbContext.Items.Find(item.ItemId)!, Quantity = 1 });
+        }
+    }
 }

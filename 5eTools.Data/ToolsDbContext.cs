@@ -22,6 +22,7 @@ public class ToolsDbContext(DbContextOptions<ToolsDbContext> options) : DbContex
     public DbSet<Encounter> Encounters { get; set; }
     public DbSet<EncounterXpThreshold> EncounterXpThresholds { get; set; }
     public DbSet<Music> Music { get; set; }
+    public DbSet<Item> Items { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
