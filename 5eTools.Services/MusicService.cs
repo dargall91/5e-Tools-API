@@ -25,10 +25,10 @@ public interface IMusicService
 public class MusicService(ToolsDbContext dbContext, IConfiguration configuration) : IMusicService
 {
     private readonly string musicFolder = configuration["MusicFolder"]!;
-    //unused, but must be initalized here for the SoundPlayer to work. Service lifetime must be properly be properly set so it can be disposed
+    //unused, but must be initalized here for the SoundPlayer to work. Service lifetime must be properly set so it can be disposed
     private static readonly AudioEngine audioEngine = new MiniAudioEngine(44100, Capability.Playback);
     private static SoundPlayer? SoundPlayer { get; set; }
-    private static string? CurrentlyPlaying { get; set; }
+    private static int? CurrentlyPlaying { get; set; }
 
     public bool MusicIdExists(int id) => dbContext.Music.Find(id) != default;
 
@@ -62,7 +62,7 @@ public class MusicService(ToolsDbContext dbContext, IConfiguration configuration
         {
             Play(track);
         }
-        else if (CurrentlyPlaying != track.Name)
+        else if (CurrentlyPlaying != id)
         {
             SoundPlayer.Stop();
             Mixer.Master.RemoveComponent(SoundPlayer);
@@ -133,7 +133,7 @@ public class MusicService(ToolsDbContext dbContext, IConfiguration configuration
 
     private void Play(Music music)
     {
-        CurrentlyPlaying = music.Name;
+        CurrentlyPlaying = music.Id;
         var dataProvider = new ChunkedDataProvider(musicFolder + music.FileName);
 
         SoundPlayer = new SoundPlayer(dataProvider)
