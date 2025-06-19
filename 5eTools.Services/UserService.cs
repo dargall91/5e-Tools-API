@@ -42,6 +42,8 @@ public interface IUserService
     void UpdateUserPermissions(int id, bool? isAdmin, bool? canHostCampaigns);
 
     void SetUserActiveStatus(int id, bool isActive);
+
+    List<ListItem> GetAllUsers();
 }
 
 public class UserService(ICryptographyService cryptographyService, ToolsDbContext dbContext) : IUserService
@@ -132,6 +134,14 @@ public class UserService(ICryptographyService cryptographyService, ToolsDbContex
 
         dbContext.SaveChanges();
     }
+
+    public List<ListItem> GetAllUsers()
+        => dbContext.Users.Select(x => new ListItem
+        {
+            Id = x.Id,
+            Name = x.Username
+        })
+        .ToList();
 
     private static List<string> ValidatePassword(string encryptedPassword)
     {
