@@ -75,4 +75,11 @@ public class UserController(IUserService userService) : ControllerBase
 
         return NotFound(new ResponseWrapper<object>($"No User with ID {id} found"));
     }
+
+    [HttpGet("all")]
+    public IActionResult GetAllUsers()
+    {
+        var users = userService.GetAllUsers();
+        return Ok(new ResponseWrapper<List<ListItem>>(users));
+    }
 }
